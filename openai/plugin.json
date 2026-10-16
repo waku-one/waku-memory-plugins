@@ -7,7 +7,7 @@
     "url": "https://www.waku.one/"
   },
   "homepage": "https://www.waku.one/",
-  "repository": "https://github.com/ShenSeanChen/waku-memory-plugins",
+  "repository": "https://github.com/waku-one/waku-memory-plugins",
   "license": "MIT",
   "keywords": [
     "memory",
@@ -27,7 +27,7 @@
       "Write"
     ],
     "websiteURL": "https://www.waku.one/",
-    "supportURL": "https://github.com/ShenSeanChen/waku-memory-plugins/issues",
+    "supportURL": "https://github.com/waku-one/waku-memory-plugins/issues",
     "privacyPolicyURL": "https://www.waku.one/privacy",
     "termsOfServiceURL": "https://www.waku.one/terms",
     "brandColor": "#E1AE05",
@@ -42,43 +42,31 @@
             {
               "description": "Save a new preference the user states.",
               "prompt": "Remember that I write commit messages in the imperative mood, like 'Add login page'.",
-              "tools_triggered": [
-                "memory.remember"
-              ],
+              "tools_triggered": "memory.remember",
               "expected_behavior": "ChatGPT calls memory.remember with the preference in the user's words and kind preference, then confirms it was saved. Asking a second time returns the existing memory with deduped set to true, so no duplicate is stored."
             },
             {
               "description": "Answer from a preference saved earlier.",
               "prompt": "Which package manager should I use for my new JavaScript project?",
-              "tools_triggered": [
-                "memory.search"
-              ],
+              "tools_triggered": "memory.search",
               "expected_behavior": "ChatGPT calls memory.search and finds the memory 'Prefers pnpm over npm for JavaScript projects.' It recommends pnpm and says the recommendation comes from that memory."
             },
             {
               "description": "Recall a project decision and its reason.",
               "prompt": "What did we decide about the database for Orbit, and why?",
-              "tools_triggered": [
-                "memory.search"
-              ],
+              "tools_triggered": "memory.search",
               "expected_behavior": "ChatGPT calls memory.search and finds the Orbit decision. It answers that Orbit uses Postgres, and that MongoDB was rejected in March 2026 because the team needed joins."
             },
             {
               "description": "Explain where a memory came from.",
               "prompt": "Where did the rule about releasing Orbit on Tuesdays come from? Has it changed?",
-              "tools_triggered": [
-                "memory.search",
-                "memory.explain"
-              ],
+              "tools_triggered": "memory.search, memory.explain",
               "expected_behavior": "ChatGPT calls memory.search to find the release rule, then memory.explain with its id. It reports where the memory came from, each revision in order and how often it has been retrieved."
             },
             {
               "description": "Forget a memory after the user confirms.",
               "prompt": "Forget the memory that says I use tabs for indentation.",
-              "tools_triggered": [
-                "memory.search",
-                "memory.forget"
-              ],
+              "tools_triggered": "memory.search, memory.forget",
               "expected_behavior": "ChatGPT calls memory.search to find the memory, then asks the user to confirm, because memory.forget is marked destructive. After the user confirms, memory.forget succeeds, and a new search no longer returns the memory."
             }
           ],
