@@ -1,16 +1,16 @@
 {
   "name": "waku",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Waku Memory: durable memory for your Claude Code sessions. memory.recall brings what is known about a project into a session; memory.remember keeps what matters; the plugin's hooks open each session with a brief and, once you turn capture on at www.waku.one/integrations, send each turn to be remembered. What you type and what the agent replies is sent to Waku's servers and on to the AI providers that turn a session into memories and make them searchable, named at www.waku.one/privacy; your files, the commands the agent runs and its reasoning are not. This is an alpha and its data can be lost.",
   "author": {
     "name": "Waku"
   },
   "homepage": "https://www.waku.one/",
-  "repository": "https://github.com/ShenSeanChen/waku-memory-plugins",
+  "repository": "https://github.com/waku-one/waku-memory-plugins",
   "privacyPolicyUrl": "https://www.waku.one/privacy",
   "termsOfServiceUrl": "https://www.waku.one/terms",
   "documentationUrl": "https://www.waku.one/docs",
-  "supportUrl": "https://github.com/ShenSeanChen/waku-memory-plugins/issues",
+  "supportUrl": "https://github.com/waku-one/waku-memory-plugins/issues",
   "hooks": "./hooks/claude-code.json",
   "skills": "./skills/"
 }
