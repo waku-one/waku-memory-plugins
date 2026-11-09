@@ -1,7 +1,7 @@
 {
   "name": "waku",
-  "version": "0.13.0",
-  "description": "Waku Memory: durable memory for your Claude Code sessions. memory.recall brings what is known about a project into a session; memory.remember keeps what matters; the plugin's hooks open each session with a brief and, once you turn capture on at www.waku.one/integrations, send each turn to be remembered. What you type and what the agent replies is sent to Waku's servers and on to the AI providers that turn a session into memories and make them searchable, named at www.waku.one/privacy; your files, the commands the agent runs and its reasoning are not. This is an alpha and its data can be lost.",
+  "version": "0.14.0",
+  "description": "Waku Memory: durable memory for your Claude Code sessions. memory.recall brings what is known about a project into a session; memory.remember keeps what matters; the plugin's hooks open each session with a brief and, once you turn capture on at www.waku.one/integrations, send each turn to be remembered. What you type and what the agent replies is sent to Waku's servers and on to the AI providers that turn a session into memories and make them searchable, named at www.waku.one/privacy; your files, the commands the agent runs and its reasoning are not. When you ask, it also saves your agent setup (MCP servers, plugins, connectors and scheduled tasks, with every secret removed first), so that a new computer or account can be set up the same way. This is an alpha and its data can be lost.",
   "author": {
     "name": "Waku"
   },
