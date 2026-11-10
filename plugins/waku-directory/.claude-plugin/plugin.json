@@ -1,5 +1,6 @@
 {
   "name": "waku",
+  "displayName": "Waku Memory",
   "version": "0.14.0",
   "description": "Waku Memory: durable memory that follows you across sessions, agents and computers. memory.search finds what is known about a task; memory.remember keeps what matters. When you ask, it also saves your agent setup (MCP servers, plugins, connectors and scheduled tasks, with every secret removed first), so that a new computer or account can be set up the same way. This version of the plugin runs no hooks, so nothing is sent until the agent calls a tool or you ask it to save your setup. What the agent passes to a tool is sent to Waku's servers and on to the AI providers that make it searchable, named at www.waku.one/privacy. This is an alpha and its data can be lost.",
   "author": {
@@ -11,5 +12,14 @@
   "termsOfServiceUrl": "https://www.waku.one/terms",
   "documentationUrl": "https://www.waku.one/docs",
   "supportUrl": "https://github.com/waku-one/waku-memory-plugins/issues",
+  "keywords": [
+    "memory",
+    "context",
+    "knowledge",
+    "mcp",
+    "agents",
+    "setup",
+    "migration"
+  ],
   "skills": "./skills/"
 }
