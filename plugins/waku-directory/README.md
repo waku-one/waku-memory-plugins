@@ -43,4 +43,16 @@ nothing in this plugin runs it. It shows what it sends and waits for a typed
 
 What the agent passes to a Waku tool is sent to Waku's servers at
 api.waku.one, and on to the AI providers that make memories searchable, named
-at https://www.waku.one/privacy. This is an alpha, and its data can be lost.
+at https://www.waku.one/privacy.
+
+One path does not go through the plugin's MCP server. When you ask the
+`waku-setup` skill to save or restore your setup, the agent runs Waku's
+command-line tool, `npx -y waku-memory setup save` or
+`npx -y waku-memory setup restore`, which `npx` downloads from the npm
+registry (the `waku-memory` package). On save, the tool reads your agents'
+settings files on your computer, removes every key, token and password, and
+sends the list to Waku's API at https://api.waku.one/setup with the key that
+`npx -y waku-memory login` saved. On restore, it reads the list back from the
+same API. It sends the list nowhere else.
+
+This is an alpha, and its data can be lost.
