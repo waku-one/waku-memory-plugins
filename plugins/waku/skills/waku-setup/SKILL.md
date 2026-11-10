@@ -60,21 +60,37 @@ a saved list.
    `--items` plus `--yes <id,...>` for only the ones they agree to. A second
    run is safe, because the command overwrites nothing. Items it prints
    under "For the agent to re-create", such as a Cowork scheduled task,
-   follow step 3.
-3. For an account's items and the items the command left to you,
-   re-create what your own tools can create, such as a scheduled task or a
-   routine. Show its full prompt and schedule
-   first, and create it only after the person says yes to that item.
-   Attach the connectors it used only after the person has signed in to
-   them here.
-4. Give the person a checklist for everything else: each connector by its
-   name in the app's connector settings, a custom connector by its URL,
-   and each key a server needs by its `<secret:NAME>`. On a Team or
-   Enterprise account, an admin enables a connector before a member can
-   connect it. A scheduled task you could not create goes on the checklist
-   as the sentence that re-creates it, such as "Every weekday at 8:00,
-   list three articles."
-5. Call `setup.mark` for each item you handled: `done`, `manual` for an
+   follow step 4.
+3. Connect the connectors first. Skip this step when the picked source
+   holds no connector. A scheduled task can use only a connector the
+   account has connected, and only the person can connect one, because
+   each needs their own sign-in. Never sign in to or approve a connector
+   for the person, even with a browser tool. List every connector in the
+   picked source as numbered steps, each with the place it is added:
+   - In Claude, open Customize (or Settings) > Connectors. Find a
+     connector from the directory by its name. Add any other one with Add
+     custom connector and the URL from the list.
+   - In ChatGPT, open Settings > Apps (or Connectors). A custom connector
+     needs Developer mode, which is turned on in the advanced settings
+     there.
+   - On a Team or Enterprise account, an admin enables a connector in the
+     organization's settings before a member can connect it.
+
+   When the person says they are done, check which of them your tools can
+   see now: the MCP servers and tools in this session, or the connectors a
+   routine tool lists. Mark each one that arrived `done`, and name the ones
+   still missing.
+4. Then re-create the scheduled tasks, and any other account item your own
+   tools can create, such as a routine. Show each one's full prompt and
+   schedule first, and create it only after the person says yes to that
+   item. Attach the connectors it used that are now connected. When one is
+   still missing, say which, and ask whether to create the task now or to
+   wait until it is connected. A task that waits goes on the checklist.
+5. Give the person a checklist for everything else: each connector still
+   missing, each key a server needs by its `<secret:NAME>`, and each
+   scheduled task you did not create, as the sentence that re-creates it,
+   such as "Every weekday at 8:00, list three articles."
+6. Call `setup.mark` for each item you handled: `done`, `manual` for an
    item on the checklist, `skipped` or `failed`, each with a short note.
    The restore command marks the computer items it handled by itself.
 
