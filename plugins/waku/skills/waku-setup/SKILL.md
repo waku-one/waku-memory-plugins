@@ -71,7 +71,8 @@ or an account, offer to save, and wait for a yes.
    what to call this account, such as "Claude · work", and put an email
    address in the name only when they type one. A second save under the
    same `source_label` replaces that source's list, so call `setup.list`
-   first and reuse the name the account already has. Leave out `raw`
+   with `summary: true` first and reuse the name the account already has.
+   Leave out `raw`
    unless the person pasted the items; Waku then keeps the items
    themselves as the original. Write every key, token or password as
    `<secret:NAME>`, in the items and in `raw` alike. Waku refuses a save
@@ -86,10 +87,13 @@ or an account, offer to save, and wait for a yes.
 Restore when the person asks to set up this computer or this account from
 a saved list.
 
-1. Call `setup.list`. When it is empty, tell the person that the list may
-   be saved under a different Waku sign-in, and do not guess. Otherwise
-   show every source with its items, and ask which source to restore
-   from. Propose that source's items and none of the others. Leave out an
+1. Call `setup.list` with `summary: true`, which leaves each item's body
+   out. When it is empty, tell the person that the list may be saved under
+   a different Waku sign-in, and do not guess. Otherwise show every source
+   with its items, and ask which source to restore from. Then call
+   `setup.list` with that source's `source_label` to read its items in
+   full, including each scheduled task's prompt. Propose that source's
+   items and none of the others. Leave out an
    item whose `restore_state` is `done` unless the person asks for it,
    and say which items have `gone_at`: they are no longer on their source.
    On a move between accounts on the same computer, propose only the
