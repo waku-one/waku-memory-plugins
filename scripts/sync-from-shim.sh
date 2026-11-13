@@ -16,7 +16,7 @@ set -eu
 here=$(cd "$(dirname "$0")/.." && pwd)
 shim=${1:-"$here/../waku-memory-backend/shim"}
 dest="$here/plugins/waku"
-for f in .claude-plugin .codex-plugin .mcp.json hooks skills LICENSE; do
+for f in .claude-plugin .codex-plugin .waku-plugin .mcp.json hooks skills LICENSE; do
   rm -rf "$dest/$f"
   cp -R "$shim/$f" "$dest/$f"
 done

@@ -49,6 +49,8 @@ Codex asks them to review and trust this plugin's hooks (`/hooks`
 in the CLI). Until then the brief and the capture do not run.
 Claude Code asks for no such step; there the person signs in once
 through `/mcp` and turns capture on at www.waku.one/integrations.
+Waku Agent asks for no such step either; there the person signs in
+once with `waku mcp login waku_memory` when Waku first starts.
 
 <!-- This bullet names no processor, and neither does any other product
      text: they point at www.waku.one/privacy, whose section 4 lists them.

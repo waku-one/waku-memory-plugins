@@ -1,0 +1,64 @@
+{
+  "description": "Waku Memory: the session brief and turn capture through the waku_memory MCP server, for Waku Agent.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "waku_memory",
+            "tool": "session.hook",
+            "timeout": 10,
+            "input": {
+              "harness": "waku",
+              "event": "${hook_event_name}",
+              "session_id": "${session_id}",
+              "cwd": "${cwd}",
+              "source": "${source}"
+            }
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "waku_memory",
+            "tool": "session.hook",
+            "timeout": 10,
+            "input": {
+              "harness": "waku",
+              "event": "${hook_event_name}",
+              "session_id": "${session_id}",
+              "cwd": "${cwd}",
+              "turn_id": "${turn_id}",
+              "prompt": "${prompt}"
+            }
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "waku_memory",
+            "tool": "session.hook",
+            "timeout": 10,
+            "input": {
+              "harness": "waku",
+              "event": "${hook_event_name}",
+              "session_id": "${session_id}",
+              "cwd": "${cwd}",
+              "turn_id": "${turn_id}",
+              "last_assistant_message": "${last_assistant_message}"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
