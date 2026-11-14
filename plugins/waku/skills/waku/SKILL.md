@@ -48,7 +48,8 @@ One-time setup the person does, on Codex only: after installing,
 Codex asks them to review and trust this plugin's hooks (`/hooks`
 in the CLI). Until then the brief and the capture do not run.
 Claude Code asks for no such step; there the person signs in once
-through `/mcp` and turns capture on at www.waku.one/integrations.
+through `/mcp`. "Remember from conversations" is on by default, and the
+person can turn it off for each agent at www.waku.one/integrations.
 Waku Agent asks for no such step either; there the person signs in
 once with `waku mcp login waku_memory` when Waku first starts.
 

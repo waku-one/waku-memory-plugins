@@ -1,8 +1,8 @@
 # Waku Memory
 
 Waku Memory keeps what you tell your agents and what they learn, and brings it
-back into later sessions. One store serves Claude Code, Codex and any other
-agent that speaks MCP, so a preference you state in one session reaches the
+back into later sessions. One store serves Claude Code, Codex, Waku Agent and
+any other agent that speaks MCP, so a preference you state in one session reaches the
 next one, on any machine.
 
 ## What the plugin contains
@@ -12,8 +12,9 @@ next one, on any machine.
   `memory.explain`, `memory.forget` and `memory.import`.
 - Three hooks that call that server's `session.hook` tool. The first prompt of
   a session brings a short brief of the project's memories, a compaction
-  brings it again, and each turn's reply is sent for extraction once you turn
-  capture on at https://www.waku.one/integrations.
+  brings it again, and each turn's reply is sent for extraction. "Remember
+  from conversations" is on by default, and you can turn it off for each
+  agent at https://www.waku.one/integrations.
 - One skill that tells the agent when to search and when to remember.
 
 Nothing runs on your machine. The plugin holds no program and installs no
@@ -32,6 +33,10 @@ Then run `/mcp`, choose `waku` and finish in the browser. In Codex, run
 `codex plugin add waku@waku-memory`. The install opens the browser sign-in, and Codex then asks you to trust the
 plugin's hooks once in `/hooks`.
 
+In Waku Agent, run `pip install waku-agent` and then
+`waku plugin install waku@waku-memory`. Run `waku mcp login waku_memory` to
+sign in, or start `waku` and sign in in the browser it opens.
+
 ## What it sends
 
 What you type and what the agent replies is sent to Waku's servers at
@@ -40,7 +45,7 @@ make them searchable, named at https://www.waku.one/privacy. Tool output, the
 files the agent reads and the commands it runs are not sent, except where the
 agent quotes them in its own reply. The agent's reasoning is never sent.
 
-Each prompt is also sent, whether or not capture is on, so the memories that
+Each prompt is also sent, whether or not remembering from conversations is on, so the memories that
 bear on it can be added beside it. Its first 2,000 characters are kept for 30
 days in a match record that only you can read, on the Matches page.
 

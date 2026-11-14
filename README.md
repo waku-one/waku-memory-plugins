@@ -2,8 +2,9 @@
 
 This repository holds the Waku Memory plugin, in `plugins/waku`, and the two
 files that list it: `.claude-plugin/marketplace.json` for Claude Code and
-`.agents/plugins/marketplace.json` for Codex. Both harnesses read the plugin
-straight from this repository, so installing it needs neither Node nor npm.
+`.agents/plugins/marketplace.json` for Codex. Claude Code, Codex and Waku
+Agent read the plugin straight from this repository, so installing it needs
+neither Node nor npm.
 
 The plugin's source of truth is `shim/` in the private backend repository,
 which also builds the npm package
@@ -22,8 +23,9 @@ then `/mcp` and choose `waku` to sign in. From a shell, the same install is
 install is two commands: `/plugin marketplace add
 ShenSeanChen/waku-memory-plugins`, then `/plugin install waku@waku-memory`.
 Claude Code asks for no hook-trust step. The first prompt of a session brings
-the brief; each turn's reply is sent for extraction once you turn capture on
-at https://www.waku.one/integrations.
+the brief, and each turn's reply is sent for extraction. "Remember from
+conversations" is on by default. You can turn it off for each agent at
+https://www.waku.one/integrations.
 
 ## Install in Codex
 
@@ -36,6 +38,17 @@ Installing runs a browser sign-in against Waku's authorization server and
 stores the credential where Codex keeps it. Codex then asks you to review and
 trust the plugin's three hooks. Until you trust them, the session brief and the
 capture do not run — open `/hooks` in Codex to do it.
+
+## Install in Waku Agent
+
+```
+pip install waku-agent
+waku plugin install waku@waku-memory
+```
+
+Waku Agent knows this marketplace by name, so no `marketplace add` step is
+needed. Run `waku mcp login waku_memory` to sign in, or start `waku` and sign
+in in the browser it opens. Waku Agent asks for no hook-trust step.
 
 ## What it does
 
