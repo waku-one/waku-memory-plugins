@@ -1,7 +1,7 @@
 {
   "name": "waku",
   "displayName": "Waku Memory",
-  "version": "0.14.3",
+  "version": "0.14.4",
   "description": "Waku Memory: durable memory for your Waku Agent conversations. memory.recall brings what is known into a conversation; memory.remember keeps what matters; the plugin's hooks open each session with a brief and send each turn to be remembered. What you type and what the agent replies is sent to Waku's servers and on to the AI providers that turn a session into memories and make them searchable, named at www.waku.one/privacy; your files, the commands the agent runs and its reasoning are not. You can turn this off for Waku Agent at www.waku.one/integrations. When you ask, it also saves your agent setup (MCP servers, plugins, connectors and scheduled tasks, with every secret removed first), so that a new computer or account can be set up the same way. This is an alpha and its data can be lost.",
   "homepage": "https://www.waku.one/",
   "privacyPolicyUrl": "https://www.waku.one/privacy",
