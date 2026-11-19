@@ -36,6 +36,13 @@ learn, and brings it back into later sessions.
 - Call `memory.remember` when the person states a preference, a decision,
   a procedure or a fact they will want next time. Use their words. Do not
   store secrets, credentials or file contents.
+- When the person says a memory is wrong, out of date or no longer
+  wanted, fix it in the same turn. Call `memory.search` to find the memory
+  and its id, then call `memory.forget` with that id. When the person also
+  says what is true now, save that with `memory.remember`, in their words.
+  Act only on what the person said. When you doubt a memory yourself, tell
+  the person and leave the memory as it is. The person can restore a
+  forgotten memory for 30 days, under Recently deleted in Waku's settings.
 - What the person types and what you reply is sent to Waku after each turn
   by the plugin's hooks; tool output is not. Each prompt is also sent,
   capture on or off, to find the memories that bear on it; its first
