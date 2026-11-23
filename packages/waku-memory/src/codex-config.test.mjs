@@ -20,8 +20,9 @@ import {
   isOwnCodexEntry,
   mergeCodexHooks,
   removeCodexHooks,
-  WAKU_MARKETPLACE_ENTRY,
-  mergeMarketplaceEntry,
+  OLD_NPM_MARKETPLACE_ENTRY,
+  hasOldNpmEntry,
+  removeOldNpmEntry,
   codexPluginPresent,
 } from './codex-config.ts'
 // Namespace import for the same reason hook.test.mjs and capture.test.mjs
@@ -533,25 +534,38 @@ test('removeCodexHooks removes only ours and deletes the emptied event key', () 
 
 // ---- marketplace entry --------------------------------------------------
 
-test('mergeMarketplaceEntry(undefined) creates the personal marketplace with just our entry', () => {
-  const out = mergeMarketplaceEntry(undefined)
-  assert.equal(out.result, 'wrote')
-  assert.deepEqual(out.data, { name: 'personal', interface: { displayName: 'Personal' }, plugins: [WAKU_MARKETPLACE_ENTRY] })
-})
+// spec 083: the CLI wrote this entry until 0.14.7, and the npm package holds
+// no plugin since 0.15.0. The CLI now only takes the entry out.
 
-test('mergeMarketplaceEntry appends ours once, keeping the file\'s own keys and other plugins', () => {
+test('removeOldNpmEntry leaves a missing file and a file without the entry unchanged', () => {
+  assert.deepEqual(removeOldNpmEntry(undefined), { data: undefined, result: 'unchanged' })
   const existing = { name: 'personal', interface: { displayName: 'Personal' }, plugins: [{ name: 'someone-elses-plugin' }] }
-  const out = mergeMarketplaceEntry(existing)
-  assert.equal(out.result, 'wrote')
-  assert.equal(out.data.name, 'personal')
-  assert.deepEqual(out.data.plugins, [{ name: 'someone-elses-plugin' }, WAKU_MARKETPLACE_ENTRY])
+  const out = removeOldNpmEntry(existing)
+  assert.equal(out.result, 'unchanged')
+  assert.equal(out.data, existing)
+  assert.equal(hasOldNpmEntry(existing), false)
+  assert.equal(hasOldNpmEntry(undefined), false)
 })
 
-test('mergeMarketplaceEntry is unchanged when ours is already present', () => {
-  const existing = { name: 'personal', interface: { displayName: 'Personal' }, plugins: [WAKU_MARKETPLACE_ENTRY] }
-  const out = mergeMarketplaceEntry(existing)
-  assert.equal(out.result, 'unchanged')
-  assert.deepEqual(out.data, existing)
+test('removeOldNpmEntry takes the npm entry out and keeps the file\'s own keys and other plugins', () => {
+  const existing = {
+    name: 'personal',
+    interface: { displayName: 'Personal' },
+    extra: 1,
+    plugins: [{ name: 'someone-elses-plugin' }, OLD_NPM_MARKETPLACE_ENTRY],
+  }
+  assert.equal(hasOldNpmEntry(existing), true)
+  const out = removeOldNpmEntry(existing)
+  assert.equal(out.result, 'removed')
+  assert.deepEqual(out.data, { name: 'personal', interface: { displayName: 'Personal' }, extra: 1, plugins: [{ name: 'someone-elses-plugin' }] })
+})
+
+test('removeOldNpmEntry keeps a waku entry that a person pointed somewhere else', () => {
+  const mine = { name: 'waku', source: { source: 'local', path: './plugins/waku' } }
+  const other = { name: 'waku', source: { source: 'npm', package: 'someone-elses-waku' } }
+  const existing = { name: 'personal', plugins: [mine, other, { name: 'waku', source: 'a string' }] }
+  assert.equal(hasOldNpmEntry(existing), false)
+  assert.equal(removeOldNpmEntry(existing).result, 'unchanged')
 })
 
 // ---- plugin detection -----------------------------------------------------

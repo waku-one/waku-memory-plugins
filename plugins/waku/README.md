@@ -45,8 +45,10 @@ want the program on your machine, turn the plugin off with `/plugin`.
 
 ### New in 0.15.0
 
-The plugin's files change in their version number only. The npm package
-`waku-memory` no longer carries a copy of them.
+The files that Claude Code, Codex and Waku Agent read change in their
+version number only. The folder gains the manifest and the skill that Muse
+reads. The npm package `waku-memory` no longer carries a copy of the
+plugin's files, so install the plugin with the commands below.
 
 ## Install and sign in
 

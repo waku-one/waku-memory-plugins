@@ -411,24 +411,45 @@ export type MarketplaceFile = {
   plugins?: Array<Record<string, unknown>>
 }
 
-export const WAKU_MARKETPLACE_ENTRY = {
+// Until 0.14.7, `full-record on` and `capture enable` wrote this entry on a
+// Codex machine without the plugin. The entry told Codex to install the
+// plugin from the npm package. Since 0.15.0 the npm package holds the CLI
+// only, and the plugin comes from waku-one/waku-memory-plugins (spec 083).
+// The CLI writes no marketplace entry now. It takes this one out where the
+// plugin is not installed, because an install from it would find no plugin.
+export const OLD_NPM_MARKETPLACE_ENTRY = {
   name: 'waku',
   source: { source: 'npm', package: 'waku-memory' },
   policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' },
   category: 'Developer Tools',
 }
 
-// Writes our entry once. `existing` undefined (no marketplace.json yet)
-// yields a fresh personal marketplace holding just ours; an existing file
-// keeps its own name/interface/other keys and other plugins, with ours
-// appended -- matched by `plugins[].name === 'waku'`, so a second run is a
-// no-op rather than a duplicate entry.
-export function mergeMarketplaceEntry(existing: MarketplaceFile | undefined): { data: MarketplaceFile; result: 'wrote' | 'unchanged' } {
-  if (existing?.plugins?.some((p) => p.name === 'waku')) {
+// How a person installs the plugin in Codex. The repository's README gives
+// the same two commands.
+export const CODEX_PLUGIN_INSTALL = [
+  '  codex plugin marketplace add waku-one/waku-memory-plugins',
+  '  codex plugin add waku@waku-memory',
+].join('\n')
+
+function isOldNpmEntry(plugin: Record<string, unknown>): boolean {
+  const source = plugin.source
+  if (plugin.name !== 'waku' || source === null || typeof source !== 'object') return false
+  const { source: kind, package: pkg } = source as { source?: unknown; package?: unknown }
+  return kind === 'npm' && pkg === 'waku-memory'
+}
+
+// Whether the personal marketplace still holds the entry above.
+export function hasOldNpmEntry(existing: MarketplaceFile | undefined): boolean {
+  return existing?.plugins?.some(isOldNpmEntry) ?? false
+}
+
+// Takes the entry above out. Every other key and every other plugin stays,
+// a `waku` entry with another source included: a person wrote that one.
+export function removeOldNpmEntry(existing: MarketplaceFile | undefined): { data: MarketplaceFile | undefined; result: 'removed' | 'unchanged' } {
+  if (existing === undefined || !hasOldNpmEntry(existing)) {
     return { data: existing, result: 'unchanged' }
   }
-  const base: MarketplaceFile = existing ?? { name: 'personal', interface: { displayName: 'Personal' } }
-  return { data: { ...base, plugins: [...(base.plugins ?? []), WAKU_MARKETPLACE_ENTRY] }, result: 'wrote' }
+  return { data: { ...existing, plugins: (existing.plugins ?? []).filter((p) => !isOldNpmEntry(p)) }, result: 'removed' }
 }
 
 // ---------------------------------------------------------------------------

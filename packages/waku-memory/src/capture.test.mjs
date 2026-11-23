@@ -1444,7 +1444,7 @@ test('disable: idempotent -- disabling twice does not error the second time', as
 
 // ---- enable()/disable()/status() on a Codex machine (task 10, spec 012 §4.6)
 
-test('enable: a Codex-only HOME writes the MCP url into the TOML table (not the ingest base) and hooks.json with four entries, the marketplace file, and prints the trust line', async () => {
+test('enable: a Codex-only HOME writes the MCP url into the TOML table (not the ingest base) and hooks.json with four entries, writes no marketplace file, and prints the trust line', async () => {
   await withDir(async (dir) => {
     buildCodexFixture(dir)
     const deps = makeDeps(dir, { prompt: fakePrompt(['y', 'mem_sk_abc', 'n']) })
@@ -1483,8 +1483,9 @@ test('enable: a Codex-only HOME writes the MCP url into the TOML table (not the 
     assert.ok(stop.command_windows.includes(' hook --harness codex'))
     assert.ok(stop.command_windows.includes('\\'))
 
-    const marketplace = JSON.parse(readFileSync(deps.marketplacePath, 'utf8'))
-    assert.ok(marketplace.plugins.some((p) => p.name === 'waku'))
+    // spec 083: the npm package holds no plugin since 0.15.0, so the CLI
+    // writes no entry that would install the plugin from npm.
+    assert.equal(existsSync(deps.marketplacePath), false)
 
     assert.match(out, /Codex runs new hooks only after you trust them: open \/hooks in Codex and trust Waku's four entries\./)
   })
@@ -1551,22 +1552,72 @@ test('enable: a hooks.json that fails to parse is refused before config.json is 
   })
 })
 
-test('enable: a marketplace.json that fails to parse is refused before config.json is written', async () => {
+test('enable: a marketplace.json that fails to parse is left as it is, and enable goes on', async () => {
   await withDir(async (dir) => {
     buildCodexFixture(dir)
-    const deps = makeDeps(dir, { prompt: fakePrompt([]) })
+    const deps = makeDeps(dir, { prompt: fakePrompt(['y', 'mem_sk_abc', 'n']) })
     mkdirSync(join(dir, '.agents', 'plugins'), { recursive: true })
     writeFileSync(deps.marketplacePath, '{ not valid json')
 
+    const result = await enable(OUR_INGEST_URL, deps)
+
+    assert.equal(result, 'enabled')
+    assert.equal(readFileSync(deps.marketplacePath, 'utf8'), '{ not valid json')
+    assert.ok(JSON.parse(readFileSync(deps.codexHooksPath, 'utf8')).hooks.Stop)
+  })
+})
+
+// spec 083: until 0.14.7 enable wrote this entry, which installed the plugin
+// from npm. The npm package holds no plugin since 0.15.0.
+const OLD_NPM_ENTRY = {
+  name: 'waku',
+  source: { source: 'npm', package: 'waku-memory' },
+  policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' },
+  category: 'Developer Tools',
+}
+
+test('enable: on a Codex machine without the plugin, the npm entry of an earlier version is removed and the install commands are printed', async () => {
+  await withDir(async (dir) => {
+    buildCodexFixture(dir)
+    const deps = makeDeps(dir, { prompt: fakePrompt(['y', 'mem_sk_abc', 'n']) })
+    mkdirSync(join(dir, '.agents', 'plugins'), { recursive: true })
+    writeFileSync(
+      deps.marketplacePath,
+      JSON.stringify({ name: 'personal', interface: { displayName: 'Personal' }, plugins: [{ name: 'someone-elses-plugin' }, OLD_NPM_ENTRY] }),
+    )
+
     const out = await captureLog(async () => {
-      const result = await enable(OUR_INGEST_URL, deps)
-      assert.equal(result, 'refused')
+      assert.equal(await enable(OUR_INGEST_URL, deps), 'enabled')
     })
 
-    assert.equal(deps.prompt.questions.length, 0)
-    assert.match(out, /not something this tool can safely merge/i)
-    assert.equal(existsSync(join(deps.configDir, 'config.json')), false)
-    assert.equal(existsSync(join(deps.configDir, 'hook')), false)
+    assert.deepEqual(JSON.parse(readFileSync(deps.marketplacePath, 'utf8')), {
+      name: 'personal',
+      interface: { displayName: 'Personal' },
+      plugins: [{ name: 'someone-elses-plugin' }],
+    })
+    assert.match(out, /Removed the Waku entry from .*marketplace\.json\. It installed the plugin from npm, and the npm package no longer holds the plugin\./)
+    assert.match(out, /codex plugin marketplace add waku-one\/waku-memory-plugins\n {2}codex plugin add waku@waku-memory/)
+  })
+})
+
+test('enable: on a Codex machine with the plugin, the npm entry stays and the person is told how to install again', async () => {
+  await withDir(async (dir) => {
+    const codexDir = join(dir, '.codex')
+    mkdirSync(codexDir, { recursive: true })
+    writeFileSync(join(codexDir, 'config.toml'), `${CODEX_FIXTURE_TOML}\n[plugins."waku@personal"]\nenabled = true\n`, 'utf8')
+    const deps = makeDeps(dir, { prompt: fakePrompt(['y', 'mem_sk_abc', 'n']) })
+    mkdirSync(join(dir, '.agents', 'plugins'), { recursive: true })
+    const before = JSON.stringify({ name: 'personal', plugins: [OLD_NPM_ENTRY] })
+    writeFileSync(deps.marketplacePath, before)
+
+    const out = await captureLog(async () => {
+      assert.equal(await enable(OUR_INGEST_URL, deps), 'enabled')
+    })
+
+    assert.equal(readFileSync(deps.marketplacePath, 'utf8'), before)
+    assert.match(out, /lists the Waku plugin from npm, and the npm package no longer holds the plugin\. If Codex installed the plugin from that entry, install it again:/)
+    assert.match(out, /codex plugin add waku@waku-memory/)
+    assert.doesNotMatch(out, /Removed the Waku entry/)
   })
 })
 
@@ -1585,8 +1636,7 @@ test('enable: a HOME with both Claude Code and Codex writes both harnesses\' fil
     assert.match(toml, /\[mcp_servers\.waku\]/)
     const hooks = JSON.parse(readFileSync(deps.codexHooksPath, 'utf8'))
     assert.ok(hooks.hooks.Stop)
-    const marketplace = JSON.parse(readFileSync(deps.marketplacePath, 'utf8'))
-    assert.ok(marketplace.plugins.some((p) => p.name === 'waku'))
+    assert.equal(existsSync(deps.marketplacePath), false)
   })
 })
 

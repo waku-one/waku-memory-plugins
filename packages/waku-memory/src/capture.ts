@@ -56,7 +56,9 @@ import {
   isOwnCodexEntry,
   mergeCodexHooks,
   mergeCodexToml,
-  mergeMarketplaceEntry,
+  CODEX_PLUGIN_INSTALL,
+  hasOldNpmEntry,
+  removeOldNpmEntry,
   removeCodexHooks,
   removeCodexToml,
 } from './codex-config.ts'
@@ -661,13 +663,10 @@ export function readCodexHooksFile(path: string): CodexHooksFile | undefined {
   }
 }
 
-// Reads ~/.agents/plugins/marketplace.json. Missing or blank is `undefined`
-// -- not `{}` -- because mergeMarketplaceEntry(undefined) is what builds the
-// fresh personal marketplace (name, interface, our one plugin); passing `{}`
-// instead would be merged into as if it were an existing, but nameless,
-// file. Real corruption is its own 'invalid' outcome, distinct from
-// undefined, so enable() can refuse on it without also refusing the far
-// more common "nothing here yet" case.
+// Reads ~/.agents/plugins/marketplace.json. Missing or blank is `undefined`.
+// A file that does not parse is 'invalid'. enable() writes no entry into
+// this file since 0.15.0. It only takes out the entry that earlier versions
+// wrote (removeOldNpmEntry), so it leaves an invalid file alone and goes on.
 function readMarketplaceFile(path: string): MarketplaceFile | undefined | 'invalid' {
   let raw: string
   try {
@@ -1311,9 +1310,9 @@ function codexTomlRefusalMessage(codexConfigPath: string): string {
 //      protect.
 //   3. when codexConfigPath exists, detect the plugin (codexPluginPresent).
 //      If it is not there, compute the TOML merge (mergeCodexToml) and read
-//      hooks.json and marketplace.json -- all before the disclosure, for the
+//      hooks.json -- all before the disclosure, for the
 //      same reason as step 2: a refusal (a foreign [mcp_servers.waku] table,
-//      or either file unreadable) must cost the user nothing and write
+//      or a hooks.json that does not parse) must cost the user nothing and write
 //      nothing, exactly like a Claude Code refusal. If the plugin *is*
 //      there, none of this runs: it already carries the hooks and the MCP
 //      server, so writing our own beside it would be redundant at best and a
@@ -1383,8 +1382,8 @@ function codexTomlRefusalMessage(codexConfigPath: string): string {
 //      Otherwise write the TOML table (only when step 3's merge actually
 //      changed it -- 'unchanged' writes nothing), merge and write hooks.json
 //      unconditionally (the same idempotent replace-ours-keep-foreign write
-//      settings.json always gets), and write the marketplace file only when
-//      mergeMarketplaceEntry says it changed;
+//      settings.json always gets), and take the pre-0.15.0 npm entry out of
+//      the personal marketplace when it is there (removeOldNpmEntry);
 //   9. prune every other hook/<version> copy now that settings.json (and, on
 //      Codex, hooks.json) point only at this one (pruneHookCopies) --
 //      best-effort, never fatal, and only after both writes so a prune
@@ -1423,7 +1422,7 @@ function codexTomlRefusalMessage(codexConfigPath: string): string {
 //     same thing; full record sends more, and the server stands the plugin
 //     down for a session the hook has claimed (spec 068 D4), so the two
 //     never both write. The plugin's MCP server still wins: on Codex the
-//     TOML table and the marketplace entry stay unwritten, as before.
+//     TOML table stays unwritten, as before.
 // After the install it reads the switch once (reportSwitchesOff) and says so
 // when it is off for a harness it just wired.
 export async function enable(
@@ -1531,17 +1530,10 @@ export async function enable(
       codexHooksFile = readHooks
     }
 
-    if (!codexPluginPresentHere) {
-      const readMarketplace = readMarketplaceFile(deps.marketplacePath)
-      if (readMarketplace === 'invalid') {
-        console.error(
-          `${deps.marketplacePath}'s content is not something this tool can safely merge into -- ` +
-            `leaving it untouched. Nothing was written.`,
-        )
-        return 'refused'
-      }
-      codexMarketplaceFile = readMarketplace
-    }
+    // Read in both arms. The file is only ever made smaller (step 8), so a
+    // file that does not parse is left alone and refuses nothing.
+    const readMarketplace = readMarketplaceFile(deps.marketplacePath)
+    codexMarketplaceFile = readMarketplace === 'invalid' ? undefined : readMarketplace
   }
 
   console.log(fullRecord ? FULL_RECORD_DISCLOSURE : DISCLOSURE)
@@ -1631,8 +1623,8 @@ export async function enable(
   // Step 8: the Codex writes -- or, when the plugin already carries them,
   // exactly one sentence and neither file touched. codexHooksWrittenThisRun
   // gates the trust line (step 11): true whenever hooks.json was actually
-  // written this run, which -- unlike the TOML table and the marketplace
-  // entry, both conditioned on their own merge having changed anything -- is
+  // written this run, which -- unlike the TOML table, conditioned on its
+  // own merge having changed anything -- is
   // every time this branch runs at all (mergeCodexHooks's replace-ours
   // semantics write the file even when the entries end up identical, the
   // same way settings.json above always gets written).
@@ -1669,10 +1661,23 @@ export async function enable(
       deps.writeJsonFile(deps.codexHooksPath, mergedHooks)
       codexHooksWrittenThisRun = true
     }
-    if (!codexPluginPresentHere) {
-      const marketplaceMerge = mergeMarketplaceEntry(codexMarketplaceFile)
-      if (marketplaceMerge.result === 'wrote') {
-        deps.writeJsonFile(deps.marketplacePath, marketplaceMerge.data)
+    // Until 0.14.7 this step wrote an entry that installed the plugin from
+    // npm. The npm package holds no plugin since 0.15.0 (spec 083), so the
+    // entry goes where nothing was installed from it. Where the plugin is
+    // installed, the entry may be what Codex installed it from, so it stays
+    // and the person is told how to install from the plugin's repository.
+    if (hasOldNpmEntry(codexMarketplaceFile)) {
+      if (codexPluginPresentHere) {
+        console.log(
+          `${deps.marketplacePath} lists the Waku plugin from npm, and the npm package no longer holds the plugin. ` +
+            `If Codex installed the plugin from that entry, install it again:\n${CODEX_PLUGIN_INSTALL}`,
+        )
+      } else {
+        deps.writeJsonFile(deps.marketplacePath, removeOldNpmEntry(codexMarketplaceFile).data!)
+        console.log(
+          `Removed the Waku entry from ${deps.marketplacePath}. It installed the plugin from npm, ` +
+            `and the npm package no longer holds the plugin. To install the plugin in Codex, run:\n${CODEX_PLUGIN_INSTALL}`,
+        )
       }
     }
   }
@@ -1848,12 +1853,11 @@ export type DisableResult = 'disabled' | 'nothing-to-disable' | 'refused'
 // (ruling R6, task 10): Claude Code's hook entries when claudeDir exists
 // (unchanged from before this task), Codex's hooks.json entries and its
 // [mcp_servers.waku] TOML table when codexConfigPath exists. Deliberately
-// leaves config.json and the marketplace entry in place in every case: the
+// leaves config.json in place in every case: the
 // key is the user's to revoke on the keys page, not this tool's to delete --
 // disabling capture and revoking the credential are two different
 // decisions, and conflating them would make "disable" destructive in a way
-// its name does not promise; the marketplace entry only makes the plugin
-// *available*, the same reasoning applied one level further out.
+// its name does not promise. It leaves the personal marketplace alone too.
 //
 // `mode` (spec 068 D3): 'full-record' is `full-record off`. It removes the
 // same entries with its own wording, and it skips the consent post below:

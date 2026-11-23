@@ -100,7 +100,11 @@ The hook goes into `~/.claude/settings.json` for Claude Code and into
 uses the full record once the hook has claimed a session, and the plugin
 stops sending its own copy of that session. On Codex without the plugin,
 `full-record on` also writes the `[mcp_servers.waku]` table into
-`~/.codex/config.toml`. Codex asks for the same trust step: open `/hooks` and
+`~/.codex/config.toml`. Versions before 0.15.0 also wrote an entry into
+`~/.agents/plugins/marketplace.json` that installed the plugin from npm.
+`full-record on` now removes that entry on a machine where the plugin is not
+installed, and prints the two commands that install the plugin from its
+repository. Codex asks for the same trust step: open `/hooks` and
 trust Waku's four entries once. If "Remember from conversations" is off for
 an agent, `full-record on` says so, and full record sends nothing for that
 agent until you turn it on.
