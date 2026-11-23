@@ -6,7 +6,7 @@
     {
       "name": "waku",
       "source": "./plugins/waku",
-      "description": "Memory that follows you across sessions"
+      "description": "Memory that follows you across sessions. In Claude Code the plugin also runs one small program. The program shows a row above the prompt while you are not signed in to Waku. The program adds /waku-memories, which opens a pane with your memories."
     }
   ]
 }

@@ -17,8 +17,31 @@ next one, on any machine.
   agent at https://www.waku.one/integrations.
 - One skill that tells the agent when to search and when to remember.
 
-Nothing runs on your machine. The plugin holds no program and installs no
-package; the hooks and tools reach the server through the sign-in you open.
+The plugin installs no package. The hooks and tools reach the server through
+the sign-in you open.
+
+**In Claude Code the plugin also runs one small program, a mod.** Claude Code
+runs the mod inside itself (Claude Code 2.1.326 or later). The mod does two
+things. It shows a row above the prompt while you are not signed in to Waku.
+It adds `/waku-memories`, which opens a pane with up to 80 of your memories.
+
+The mod calls Waku only when you run `/waku-memories`, press Refresh or
+"Show more", or open a memory. It sends the folder your session runs in, and
+the pane lists that folder's project. A read costs no credit, adds no row to
+Matches, and adds one row to Usage. Claude Code passes the mod no prompt, no
+reply and no tool call. When you press "Use in prompt", Claude Code tells the
+mod whether it took the text, and the mod reads nothing else of that answer.
+The mod reads no file, starts no program and makes no network request of its
+own. It keeps one value on your machine: whether you hid the sign-in row.
+
+In Codex and Waku Agent nothing runs on your machine.
+
+### New in 0.14.7
+
+The plugin now carries the mod described above. Earlier versions held
+configuration only. After you update, Claude Code shows the row when you are
+not signed in to Waku, and `/waku-memories` opens the pane. If you do not
+want the program on your machine, turn the plugin off with `/plugin`.
 
 ## Install and sign in
 

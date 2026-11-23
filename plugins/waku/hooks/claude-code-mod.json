@@ -1,0 +1,6 @@
+{
+  "description": "This file is the Waku plugin's mod for Claude Code. The mod shows a row above the prompt while you are not signed in, and it adds /waku-memories.",
+  "modules": [
+    "./waku-mod.mjs"
+  ]
+}
