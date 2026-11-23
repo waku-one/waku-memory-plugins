@@ -1,0 +1,16 @@
+{"type":"user","uuid":"u1","cwd":"D:\\Code\\waku","message":{"role":"user","content":"Say hello in one sentence. No tools."}}
+{"type":"assistant","uuid":"a1","message":{"role":"assistant","content":[{"type":"thinking","thinking":"the person wants brevity","signature":"sig"},{"type":"text","text":"Hello — ready when you are."}]}}
+{"type":"assistant","uuid":"a2","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"cat .env"}}]}}
+{"type":"user","uuid":"u2","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"SECRET=hunter2"}]},"toolUseResult":{"stdout":"SECRET=hunter2"}}
+{"type":"user","uuid":"u3","message":{"role":"user","content":[{"type":"text","text":"<local-command-stdout>Set model to opus</local-command-stdout>"},{"type":"text","text":"Please remember: address me as Yang."}]}}
+{"type":"user","uuid":"u4","isMeta":true,"message":{"role":"user","content":"<system-reminder>injected by the harness</system-reminder>"}}
+{"type":"user","uuid":"u5","isCompactSummary":true,"message":{"role":"user","content":"This session is being continued. Files read: D:/secret.py (contents follow)"}}
+{"type":"system","subtype":"stop_hook_summary","content":"hook ran","hookAdditionalContext":[]}
+{"type":"attachment","attachment":{"type":"hook_additional_context","content":"Waku memory for project waku (1 of 1): - [preference] ..."}}
+{"type":"queue-operation","operation":"enqueue"}
+{"type":"summary","summary":"A chat about hooks","leafUuid":"a1"}
+{not json at all
+{"type":"assistant","uuid":"a3","message":{"role":"assistant","content":[{"type":"text","text":"Running the tests now."},{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"npm test"}}]}}
+{"type":"user","uuid":"u6","message":{"role":"user","content":[{"type":"image","source":{"type":"base64","media_type":"image/png","data":"AAAA"}},{"type":"text","text":"What is in this screenshot?"}]}}
+{"type":"user","uuid":"u7","message":{"role":"user","content":"<task-notification>\n<task-id>abc</task-id>\n<result>Subagent report: ran `cat .env`, SECRET=hunter2, commit 7e3deee</result>\n</task-notification>"}}
+{"type":"assistant","uuid":"a4","message":{"role":"assistant","content":[{"type":"text","text":"A screenshot of the console."},{"type":"text","text":"Nothing else stands out."}]}}

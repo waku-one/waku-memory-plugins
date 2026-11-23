@@ -43,16 +43,23 @@ configuration only. After you update, Claude Code shows the row when you are
 not signed in to Waku, and `/waku-memories` opens the pane. If you do not
 want the program on your machine, turn the plugin off with `/plugin`.
 
+### New in 0.15.0
+
+The files that Claude Code, Codex and Waku Agent read change in their
+version number only. The folder gains the manifest and the skill that Muse
+reads. The npm package `waku-memory` no longer carries a copy of the
+plugin's files, so install the plugin with the commands below.
+
 ## Install and sign in
 
 In Claude Code, install the plugin with one command:
 
 ```
-/plugin install waku --marketplace ShenSeanChen/waku-memory-plugins
+/plugin install waku --marketplace waku-one/waku-memory-plugins
 ```
 
 Then run `/mcp`, choose `waku` and finish in the browser. In Codex, run
-`codex plugin marketplace add ShenSeanChen/waku-memory-plugins` and then
+`codex plugin marketplace add waku-one/waku-memory-plugins` and then
 `codex plugin add waku@waku-memory`. The install opens the browser sign-in, and Codex then asks you to trust the
 plugin's hooks once in `/hooks`.
 

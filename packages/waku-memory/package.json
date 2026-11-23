@@ -1,0 +1,26 @@
+{
+  "name": "waku-memory",
+  "version": "0.15.0",
+  "description": "Waku Memory for your coding agent: the command line for one-time history import, full record and sign-in.",
+  "keywords": ["mcp", "memory", "claude-code", "agent", "waku"],
+  "homepage": "https://www.waku.one/",
+  "bugs": "https://github.com/waku-one/waku-memory-plugins/issues",
+  "license": "MIT",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/waku-one/waku-memory-plugins.git",
+    "directory": "packages/waku-memory"
+  },
+  "type": "module",
+  "bin": { "waku-memory": "./dist/index.js" },
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test \"src/**/*.test.mjs\"",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "devDependencies": { "typescript": "^5.7.3", "@types/node": "^22.10.7" }
+}

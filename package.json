@@ -1,0 +1,12 @@
+{
+  "name": "waku-memory-plugins",
+  "private": true,
+  "workspaces": [
+    "packages/waku-memory"
+  ],
+  "scripts": {
+    "build": "npm run build -w waku-memory",
+    "test": "node --test \"tests/*.test.mjs\" && npm test -w waku-memory",
+    "test:mod": "sh scripts/test-mod.sh && node scripts/check-mod-calls.mjs"
+  }
+}

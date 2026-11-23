@@ -1,0 +1,17 @@
+user: Say hello in one sentence. No tools.
+
+assistant: Hello — ready when you are.
+
+assistant used tool: Bash
+
+user: Please remember: address me as Yang.
+
+assistant: Running the tests now.
+
+assistant used tool: Bash
+
+user: What is in this screenshot?
+
+assistant: A screenshot of the console.
+
+assistant: Nothing else stands out.
