@@ -1,0 +1,10 @@
+# Every text file is LF on every machine. A CRLF file in plugins/waku/ would
+# ship CRLF to each person's plugin cache and fail tests/plugin.test.mjs. A
+# CRLF shebang in dist/index.js or in a script under scripts/ fails at exec
+# on Linux and macOS.
+* text=auto eol=lf
+*.png binary
+
+# Spec 011: two formatters are pinned byte-for-byte to these files, and a
+# CRLF conversion on a Windows checkout would fail both for no reason.
+tests/fixtures/** -text

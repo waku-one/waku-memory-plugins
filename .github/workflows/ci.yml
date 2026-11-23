@@ -1,0 +1,43 @@
+name: ci
+
+# The tests and the build for the npm package and the plugin files.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # The compiled entry must keep its shebang, or `npx waku-memory`
+      # resolves to a file the shell cannot run. tsc preserves the shebang.
+      - name: Verify the bin entry
+        working-directory: packages/waku-memory
+        run: |
+          test -f dist/index.js || { echo "::error::dist/index.js missing after build"; exit 1; }
+          head -1 dist/index.js | grep -q '^#!/usr/bin/env node' \
+            || { echo "::error::dist/index.js lost its shebang"; exit 1; }

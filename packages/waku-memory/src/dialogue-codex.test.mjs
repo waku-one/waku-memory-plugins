@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 
 import { CODEX_CONTENT_FORMAT, formatCodexDelta, formatCodexLine } from './dialogue-codex.ts'
 
-const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'tests', 'fixtures', 'codex-dialogue-v1')
+const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'tests', 'fixtures', 'codex-dialogue-v1')
 const transcript = readFileSync(join(FIXTURES, 'transcript.jsonl'))
 const expected = readFileSync(join(FIXTURES, 'expected.txt'), 'utf8')
 

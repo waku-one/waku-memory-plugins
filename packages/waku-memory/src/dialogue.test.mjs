@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 
 import { CONTENT_FORMAT, MAX_PIECE_BYTES, formatDelta, formatRecord } from './dialogue.ts'
 
-const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'tests', 'fixtures', 'cc-dialogue-v1')
+const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'tests', 'fixtures', 'cc-dialogue-v1')
 const transcript = readFileSync(join(FIXTURES, 'transcript.jsonl'))
 const expected = readFileSync(join(FIXTURES, 'expected.txt'), 'utf8')
 
