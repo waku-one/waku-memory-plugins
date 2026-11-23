@@ -43,6 +43,11 @@ configuration only. After you update, Claude Code shows the row when you are
 not signed in to Waku, and `/waku-memories` opens the pane. If you do not
 want the program on your machine, turn the plugin off with `/plugin`.
 
+### New in 0.15.0
+
+The plugin's files change in their version number only. The npm package
+`waku-memory` no longer carries a copy of them.
+
 ## Install and sign in
 
 In Claude Code, install the plugin with one command:
