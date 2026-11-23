@@ -1,0 +1,53 @@
+name: directory
+
+# Writes the hook-less plugin to the `directory` branch, at
+# plugins/waku-directory/. Anthropic's plugin directory reads that folder
+# on that branch. The branch changes only when the hook-less files change,
+# so a push that touches only packages/ never reaches the directory.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugins/waku/**"
+      - "directory/**"
+      - "scripts/directory-plugin.mjs"
+      - "scripts/update-directory-branch.sh"
+  workflow_dispatch:
+
+# Two pushes a few seconds apart queue here. The second run waits for the
+# first, then fetches the branch fresh before it commits.
+concurrency:
+  group: directory
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # A run that somebody starts by hand from another branch would publish
+    # that branch's files to the directory.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      # One test per rule of the directory. A hook, a file type or an
+      # .mcp.json field that the directory refuses fails here, before the
+      # branch changes.
+      - name: Check the directory's rules
+        run: node --test tests/directory-plugin.test.mjs
+
+      - name: Name the committer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Write the directory branch
+        run: sh scripts/update-directory-branch.sh origin directory
