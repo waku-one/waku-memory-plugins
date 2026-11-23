@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "name": "waku",
   "displayName": "Waku Memory",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "Waku Memory: durable memory that follows you across sessions and agents. memory.search finds what is known about a task; memory.remember keeps what matters. Muse runs no Waku hooks, so nothing is sent until the agent calls a tool. What the agent passes to a tool is sent to Waku's servers and on to the AI providers that make it searchable, named at www.waku.one/privacy. When you ask, it also saves your agent setup (MCP servers, plugins, connectors and scheduled tasks, with every secret removed first), so that a new computer or account can be set up the same way. This is an alpha and its data can be lost.",
   "logo": ".claude-plugin/icon.png",
   "author": {

@@ -465,7 +465,7 @@ const MODE_WORDS: Record<HookMode, { command: string; notDone: string; done: str
   },
 }
 
-// spec 068 D3: where a person turns "Remember from conversations" on or off.
+// spec 068 D3: where a person turns "Auto-save from conversations" on or off.
 // The same address the server's own 403 names (capture.py INTEGRATIONS_URL).
 export const INTEGRATIONS_URL = 'https://www.waku.one/integrations'
 
@@ -500,7 +500,7 @@ export async function reportSwitchesOff(
       const row = rows.find((r) => r !== null && typeof r === 'object' && (r as { harness?: unknown }).harness === harness)
       if (row !== undefined && (row as { enabled?: unknown }).enabled === false) {
         console.log(
-          `"Remember from conversations" is off for ${HARNESS_LABELS[harness]}, so full record sends nothing yet. ` +
+          `"Auto-save from conversations" is off for ${HARNESS_LABELS[harness]}, so full record sends nothing yet. ` +
             `Turn it on at ${INTEGRATIONS_URL}.`,
         )
       }
@@ -1750,7 +1750,7 @@ export type ImportResult =
   | 'list-changed'
 
 // `npx waku-memory import` (spec 068 D3): enable()'s step 10 on its own. It
-// installs no hook and never touches the "Remember from conversations"
+// installs no hook and never touches the "Auto-save from conversations"
 // switch. The order puts every question after the one that needs it:
 //   1. scan, locally -- reads files only, sends nothing. An empty scan prints
 //      renderBootstrapList's "nothing to import" sentence and stops, asking

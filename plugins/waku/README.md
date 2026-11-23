@@ -75,7 +75,7 @@ make them searchable, named at https://www.waku.one/privacy. Tool output, the
 files the agent reads and the commands it runs are not sent, except where the
 agent quotes them in its own reply. The agent's reasoning is never sent.
 
-Each prompt is also sent, whether or not remembering from conversations is on, so the memories that
+Each prompt is also sent, whether or not auto-save from conversations is on, so the memories that
 bear on it can be added beside it. Its first 2,000 characters are kept for 30
 days in a match record that only you can read, on the Matches page.
 

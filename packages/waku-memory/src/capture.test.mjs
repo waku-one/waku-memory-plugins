@@ -2442,7 +2442,7 @@ test('B2: status names the Claude Code plugin route', async () => {
 // capture enable/disable/status without the switch and without the import.
 // The tests below pin the two promises D3 makes: import never installs a
 // hook, and full-record on never runs the import and never writes the
-// "Remember from conversations" switch (no PUT /capture/<harness>). The
+// "Auto-save from conversations" switch (no PUT /capture/<harness>). The
 // alias tests above stay as they were: capture enable still does both.
 
 // Answers GET /capture with the given rows and everything else with 202,
@@ -3108,7 +3108,7 @@ test('full-record on: on a Codex plugin machine, writes hooks.json but no TOML t
   })
 })
 
-test('full-record on: says so when "Remember from conversations" is off for a harness it wired', async () => {
+test('full-record on: says so when "Auto-save from conversations" is off for a harness it wired', async () => {
   await withDir(async (dir) => {
     mkdirSync(join(dir, '.claude'), { recursive: true })
     const fetchImpl = fakeFetchWithSwitches([
@@ -3124,7 +3124,7 @@ test('full-record on: says so when "Remember from conversations" is off for a ha
     assert.equal(get[0].url, `${OUR_INGEST_URL}/capture`)
     assert.match(
       out,
-      /"Remember from conversations" is off for Claude Code, so full record sends nothing yet\. Turn it on at https:\/\/www\.waku\.one\/integrations\./,
+      /"Auto-save from conversations" is off for Claude Code, so full record sends nothing yet\. Turn it on at https:\/\/www\.waku\.one\/integrations\./,
     )
     assert.doesNotMatch(out, /is off for Codex/)
     assert.equal(putsTo(fetchImpl).length, 0)
@@ -3141,7 +3141,7 @@ test('full-record on: prints nothing about the switch when it is on, or when it 
         result = await enable(OUR_INGEST_URL, deps, { kind: 'key', key: 'mem_sk_full' }, 'full-record')
       })
       assert.equal(result, 'enabled')
-      assert.doesNotMatch(out, /Remember from conversations/)
+      assert.doesNotMatch(out, /Auto-save from conversations/)
     })
   }
 })
