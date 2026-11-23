@@ -1,4 +1,4 @@
-// shim/mod-tests/waku-mod.test.ts -- spec 095. Run with `claude plugin test shim`.
+// tests/mod/waku-mod.test.ts -- spec 095. Run with `sh scripts/test-mod.sh`.
 // No session, sign-in or network: each $ call the mod makes is answered here.
 // These tests check the element tree the mod returns. They do not check a
 // screen: an app that does not draw a site (VS Code draws no row above the

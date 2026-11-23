@@ -41,3 +41,15 @@ jobs:
           test -f dist/index.js || { echo "::error::dist/index.js missing after build"; exit 1; }
           head -1 dist/index.js | grep -q '^#!/usr/bin/env node' \
             || { echo "::error::dist/index.js lost its shebang"; exit 1; }
+
+      # Spec 095 A7: the Claude Code mod. `claude plugin test` needs no
+      # sign-in and no session. The version is pinned because Anthropic calls
+      # the mods API early access; raise it on purpose, with the tests.
+      - name: Install Claude Code
+        run: npm install --global @anthropic-ai/claude-code@2.1.328
+
+      - name: Test the mod
+        run: sh scripts/test-mod.sh
+
+      - name: Check what the mod hooks and calls
+        run: node scripts/check-mod-calls.mjs
