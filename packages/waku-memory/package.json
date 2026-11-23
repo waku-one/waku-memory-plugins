@@ -1,0 +1,26 @@
+{
+  "name": "waku-memory",
+  "version": "0.14.7",
+  "description": "Waku Memory for your coding agent: the plugin files, plus one-time history import and full record.",
+  "keywords": ["mcp", "memory", "claude-code", "agent", "waku"],
+  "homepage": "https://github.com/ShenSeanChen/waku-memory-backend/tree/spec-driven/shim#readme",
+  "bugs": "https://github.com/ShenSeanChen/waku-memory-backend/issues",
+  "license": "MIT",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShenSeanChen/waku-memory-backend.git",
+    "directory": "shim"
+  },
+  "type": "module",
+  "bin": { "waku-memory": "./dist/index.js" },
+  "files": ["dist", ".codex-plugin", ".claude-plugin", ".waku-plugin", ".mcp.json", "hooks", "skills"],
+  "engines": { "node": ">=20" },
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test \"src/**/*.test.mjs\"",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "devDependencies": { "typescript": "^5.7.3", "@types/node": "^22.10.7" }
+}
