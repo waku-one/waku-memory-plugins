@@ -1,0 +1,122 @@
+name: publish
+
+# Manual only, and deliberately so. Publishing claims a version on a
+# registry nobody can take back: npm allows unpublish for 72 hours and only
+# if nothing depends on it, so a mistaken publish is a deprecation, not a
+# delete. A tag trigger would make that one bad merge away.
+#
+# The version is read from packages/waku-memory/package.json rather than
+# typed here, and the job refuses to publish a version that already exists.
+# npm would reject it anyway, but failing before the build makes the reason
+# legible instead of arriving as a 403 at the end.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Pack and verify without publishing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  # npm trusted publishing: npm exchanges this job's GitHub OIDC token for a
+  # one-time publish credential. No npm token is stored anywhere. On a public
+  # repository the publish also carries a provenance attestation, which names
+  # the commit and the workflow that built the tarball.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # The environment's deployment rule allows only `main`, so a run started
+    # from any other branch stops before its first step. The trusted
+    # publisher on npmjs.com names this environment too.
+    environment: npm
+    defaults:
+      run:
+        working-directory: packages/waku-memory
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm CLI 11.5.1 or later.
+      - name: Refuse an npm that cannot publish by OIDC
+        run: |
+          NPM=$(npm --version)
+          echo "npm $NPM"
+          node -e '
+            const [a, b, c] = process.argv[1].split(".").map(Number)
+            const ok = a > 11 || (a === 11 && (b > 5 || (b === 5 && c >= 1)))
+            if (!ok) { console.log("::error::npm " + process.argv[1] + " is older than 11.5.1, which trusted publishing needs."); process.exit(1) }
+          ' "$NPM"
+
+      # One lock file sits at the repository root and pins the compiler.
+      # What ships is tsc's output, so the compiler's version is part of
+      # the artifact.
+      - name: Install devDependencies
+        working-directory: .
+        run: npm ci --no-audit --no-fund
+
+      - name: Build and test
+        working-directory: .
+        run: |
+          npm run build
+          npm test
+
+      # The compiled entry must be executable and keep its shebang, or
+      # `npx waku-memory` resolves to a file the shell cannot run. tsc
+      # preserves the shebang; the mode is what a fresh checkout loses.
+      - name: Verify the bin entry
+        run: |
+          test -f dist/index.js || { echo "::error::dist/index.js missing after build"; exit 1; }
+          head -1 dist/index.js | grep -q '^#!/usr/bin/env node' \
+            || { echo "::error::dist/index.js lost its shebang"; exit 1; }
+          chmod +x dist/index.js
+
+      - name: Refuse a version that is already published
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "publishing $NAME@$VERSION"
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "::error::$NAME@$VERSION is already on the registry. Bump the version in packages/waku-memory/package.json."
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      # What actually ships. `files: ["dist"]` keeps src/, the tests and
+      # tsconfig out; this prints the real contents so a reviewer can see
+      # them before anything is irreversible.
+      - name: Show what would ship
+        run: npm pack --dry-run
+
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        run: npm publish
+
+      # The registry can take a few minutes to list a new version.
+      - name: Check the provenance attestation
+        if: ${{ !inputs.dry_run }}
+        run: |
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            FOUND=$(npm view "waku-memory@$VERSION" dist.attestations --json 2>/dev/null || true)
+            if echo "$FOUND" | grep -q provenance; then
+              echo "$FOUND"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::waku-memory@$VERSION lists no provenance attestation after 5 minutes."
+          exit 1
+
+      - name: Say what happened
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "::notice::Dry run only. Nothing was published. Re-run with dry_run unchecked to publish $VERSION."
+          else
+            echo "::notice::Published waku-memory@$VERSION with provenance."
+          fi
