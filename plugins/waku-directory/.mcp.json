@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "waku": {
+      "type": "http",
+      "url": "https://api.waku.one/mcp"
+    }
+  }
+}
