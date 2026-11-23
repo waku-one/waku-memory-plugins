@@ -1,7 +1,7 @@
 {
   "name": "waku-memory",
   "version": "0.14.7",
-  "description": "Waku Memory for your coding agent: the plugin files, plus one-time history import and full record.",
+  "description": "Waku Memory for your coding agent: the command line for one-time history import, full record and sign-in.",
   "keywords": ["mcp", "memory", "claude-code", "agent", "waku"],
   "homepage": "https://www.waku.one/",
   "bugs": "https://github.com/waku-one/waku-memory-plugins/issues",

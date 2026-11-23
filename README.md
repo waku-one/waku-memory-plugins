@@ -1,27 +1,32 @@
-# Waku Memory — plugin marketplace
+# Waku Memory — the plugin and the npm package
 
-This repository holds the Waku Memory plugin, in `plugins/waku`, and the two
-files that list it: `.claude-plugin/marketplace.json` for Claude Code and
-`.agents/plugins/marketplace.json` for Codex. Claude Code, Codex and Waku
-Agent read the plugin straight from this repository, so installing it needs
-neither Node nor npm.
+This repository holds two things that are released together under one
+version number.
 
-The plugin's source of truth is `shim/` in the private backend repository,
-which also builds the npm package
-[`waku-memory`](https://www.npmjs.com/package/waku-memory). After a change
-there, run `scripts/sync-from-shim.sh` and commit `plugins/waku`.
+- **The plugin**, in `plugins/waku`. Claude Code, Codex and Waku Agent read
+  it straight from this repository, so installing it needs neither Node nor
+  npm. Two files list it: `.claude-plugin/marketplace.json` for Claude Code
+  and `.agents/plugins/marketplace.json` for Codex.
+- **The npm package** [`waku-memory`](https://www.npmjs.com/package/waku-memory),
+  in `packages/waku-memory`. It is the command line behind
+  `npx waku-memory`. It holds no plugin file.
+
+The rest of the repository serves those two. `tests/` holds the tests of the
+plugin's files and of the two marketplace files. `scripts/` and `directory/`
+build a second plugin with no hooks, which Anthropic's plugin directory
+reads.
 
 ## Install in Claude Code
 
 ```
-/plugin install waku --marketplace ShenSeanChen/waku-memory-plugins
+/plugin install waku --marketplace waku-one/waku-memory-plugins
 ```
 
 then `/mcp` and choose `waku` to sign in. From a shell, the same install is
-`claude plugin install waku --marketplace ShenSeanChen/waku-memory-plugins`
+`claude plugin install waku --marketplace waku-one/waku-memory-plugins`
 (Claude Code 2.1.292 or later). On Claude Code before 2.1.275 the
 install is two commands: `/plugin marketplace add
-ShenSeanChen/waku-memory-plugins`, then `/plugin install waku@waku-memory`.
+waku-one/waku-memory-plugins`, then `/plugin install waku@waku-memory`.
 Claude Code asks for no hook-trust step. The first prompt of a session brings
 the brief, and each turn's reply is sent for extraction. "Remember from
 conversations" is on by default. You can turn it off for each agent at
@@ -30,7 +35,7 @@ https://www.waku.one/integrations.
 ## Install in Codex
 
 ```
-codex plugin marketplace add ShenSeanChen/waku-memory-plugins
+codex plugin marketplace add waku-one/waku-memory-plugins
 codex plugin add waku@waku-memory
 ```
 
@@ -77,5 +82,31 @@ cannot afford to lose.
 `npx waku-memory capture enable` does the same thing from the command line, on
 Codex and on Claude Code alike, and can also import the history those harnesses
 already keep. It needs Node 20 or newer.
+
+## How a release works
+
+1. A pull request changes `plugins/waku`, `packages/waku-memory` or both, and
+   sets the new version. One version number covers the package, the four
+   plugin manifests and `SHIM_VERSION` in `packages/waku-memory/src/hook.ts`,
+   and a test fails when they differ. `ci.yml` runs the tests and the build
+   on the pull request.
+2. The pull request merges to `main`. Both marketplaces read `main`, so the
+   plugin is released at the merge.
+3. A person starts `publish.yml` on `main`, first with `dry_run` on and then
+   with it off. The workflow publishes the package to npm by trusted
+   publishing, with a provenance attestation. It holds no npm token.
+
+Run `npm ci`, `npm test` and `npm run build` from the repository root.
+`npm run test:mod` runs the tests of the Claude Code program in the plugin,
+and it needs the `claude` command.
+
+## The `directory` branch
+
+Anthropic's plugin directory reads the plugin with no hooks from
+`plugins/waku-directory/` on the branch `directory`. `directory.yml` builds
+that folder from `plugins/waku` after each push to `main` that changes the
+plugin, and commits it to the branch when the build changed. Nobody pushes to
+`directory` by hand, because the next build overwrites a hand edit. The
+branch holds no marketplace file, so it cannot be added as a marketplace.
 
 <https://www.waku.one/>

@@ -1,25 +1,30 @@
 # waku-memory
 
 Waku Memory gives your coding agent a memory that lasts across sessions and
-projects. The Waku plugin is all most people need. This package carries the
-plugin's files, and its `npx waku-memory` commands are extras for people who
-want more.
+projects. The Waku plugin is all most people need. This package is the
+command line beside the plugin. Its `npx waku-memory` commands are extras
+for people who want more.
+
+Since 0.15.0 this package holds the commands only. The plugin's files are in
+the plugin's own folder, and Claude Code, Codex and Waku Agent read them from
+there.
 
 ## The plugin
 
-**Claude Code.** In Claude Code, run
+The plugin is in this package's repository, at
+[`plugins/waku`](https://github.com/waku-one/waku-memory-plugins/tree/main/plugins/waku).
+Its README says how to install the plugin in Claude Code, Codex and Waku
+Agent, what the plugin sends, and what the one program in it does.
+
+In Claude Code, run
 
 ```
 /plugin install waku --marketplace waku-one/waku-memory-plugins
 ```
 
-then run `/mcp` and choose `waku` to sign in. On Claude Code before 2.1.275
-the install is two commands: `/plugin marketplace add
-waku-one/waku-memory-plugins`, then `/plugin install waku@waku-memory`.
+then run `/mcp` and choose `waku` to sign in.
 
-**Codex.** Install Waku from a Codex plugin marketplace. Codex signs you in
-with its own OAuth flow when you install it. Codex runs a new hook only after
-you trust it, so open `/hooks` in Codex and trust Waku's entries once.
+### Codex keeps asking you to sign in
 
 If Codex keeps asking you to sign in to Waku again, give it a key instead of
 the OAuth sign-in. Codex sometimes sends a refresh token it has already used
@@ -36,55 +41,9 @@ bearer_token_env_var = "WAKU_API_KEY"
 
 Revoke the key on the same page when you want it gone.
 
-**Waku Agent.** Install Waku Agent, then install the plugin from Waku Agent's
-built-in marketplace:
+## Commands
 
-```
-pip install waku-agent
-waku plugin install waku@waku-memory
-```
-
-Run `waku mcp login waku_memory` to sign in, or start `waku` and sign in in
-the browser it opens.
-
-The plugin carries the MCP server and its hooks. The first prompt of a
-session brings the brief, and a compaction brings it again. Waku remembers
-from conversations: each turn's prompt and final reply are sent to us and on
-to the AI providers that turn them into memories and make them searchable,
-named at https://www.waku.one/privacy. "Remember from conversations" is on by
-default, and you can turn it off for each agent at
-https://www.waku.one/integrations. The hooks call the server through the
-sign-in you opened.
-
-**In Claude Code the plugin also runs one small program, a mod.** Claude Code
-runs the mod inside itself (Claude Code 2.1.326 or later). The mod does two
-things. It shows a row above the prompt while you are not signed in to Waku.
-It adds `/waku-memories`, which opens a pane with up to 80 of your memories.
-
-The mod calls Waku only when you run `/waku-memories`, press Refresh or
-"Show more", or open a memory. Where Waku's server has the tools for a
-screen, the mod calls `ui.memories` and `ui.memory`. It sends the folder
-your session runs in, and the pane lists that folder's project. A read costs
-no credit, adds no row to Matches, and adds one row to Usage. Where the
-server has no such tools, the mod calls `memory.recall`. Waku counts that
-read as one lookup, which costs 1 credit and adds one row to Matches. Claude
-Code passes the mod's
-hooks no prompt, no reply and no tool call. When you press "Use in prompt",
-Claude Code tells the mod whether it took the text, and the mod reads nothing
-else of that answer. The mod reads no file, starts no program and makes no network
-request of its own. It keeps one value on your machine: whether you hid the
-sign-in row.
-
-Claude Code does not sandbox a mod, so you are trusting this file. The file is
-short, and you can read it in the plugin's folder at `hooks/waku-mod.mjs`. If
-you clone the plugin's repository, `claude plugin validate plugins/waku`
-lists every event the mod hooks and every call it makes.
-
-In Codex and Waku Agent nothing runs on your machine.
-
-## Extras
-
-Each extra is one command, named for what it does. None of them changes
+Each command is named for what it does. None of them changes
 "Remember from conversations".
 
 ### Import your history
@@ -134,7 +93,8 @@ sent, except where the agent quotes them in its reply. The agent's reasoning
 is never sent.
 
 `full-record on` shows that disclosure and waits for a typed "y". It then
-installs a hook that runs the compiled shim, so it needs Node 20 or newer.
+installs a hook that runs this package's compiled code, so it needs Node 20
+or newer.
 The hook goes into `~/.claude/settings.json` for Claude Code and into
 `~/.codex/hooks.json` for Codex. With the plugin installed too, the server
 uses the full record once the hook has claimed a session, and the plugin
