@@ -2,8 +2,8 @@
 // 2026-11-05 the directory refuses, from an organization it has not
 // Verified, every hook (an `mcp_tool` hook included), every file outside a
 // short list of types, and every config field outside a short list. The
-// full plugin keeps its hooks in waku-one/waku-memory-plugins; this one is
-// built from the same files without them. Each test below is one of the
+// full plugin keeps its hooks in plugins/waku/; this one is built from the
+// same files without them. Each test below is one of the
 // directory's rules, so a change that would be refused fails here first.
 
 import assert from 'node:assert/strict'
@@ -21,7 +21,8 @@ const SERVER_FIELDS = ['type', 'url', 'headers', 'timeout', 'alwaysLoad', 'oauth
 const OAUTH_FIELDS = ['clientId', 'callbackPort', 'authServerMetadataUrl', 'scopes']
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const shim = (p) => readFileSync(join(root, p))
+// A file of the full plugin, plugins/waku/.
+const full = (p) => readFileSync(join(root, 'plugins', 'waku', p))
 const files = directoryPlugin(root)
 const text = (p) => files.get(p).toString('utf8')
 const json = (p) => JSON.parse(text(p))
@@ -56,19 +57,19 @@ test('every file is a type the directory accepts from any organization', () => {
 test('the MCP server entry holds only fields the directory allows', () => {
   assert.deepEqual(Object.keys(json('.mcp.json')), ['mcpServers'])
   const servers = json('.mcp.json').mcpServers
-  const full = JSON.parse(shim('.mcp.json').toString('utf8')).mcpServers
-  assert.deepEqual(Object.keys(servers), Object.keys(full))
+  const fullServers = JSON.parse(full('.mcp.json').toString('utf8')).mcpServers
+  assert.deepEqual(Object.keys(servers), Object.keys(fullServers))
   for (const [name, server] of Object.entries(servers)) {
     for (const key of Object.keys(server)) assert.ok(SERVER_FIELDS.includes(key), `${name}.${key} is not a field the directory allows`)
     for (const key of Object.keys(server.oauth ?? {})) assert.ok(OAUTH_FIELDS.includes(key), `${name}.oauth.${key}`)
-    assert.equal(server.type, full[name].type)
-    assert.equal(server.url, full[name].url)
+    assert.equal(server.type, fullServers[name].type)
+    assert.equal(server.url, fullServers[name].url)
   }
 })
 
 test('the manifest matches the package, and the skills are the hook-less ones', () => {
   const manifest = json('.claude-plugin/plugin.json')
-  const pkg = JSON.parse(shim('package.json').toString('utf8'))
+  const pkg = JSON.parse(readFileSync(join(root, 'packages/waku-memory/package.json'), 'utf8'))
   assert.equal(manifest.name, 'waku')
   assert.equal(manifest.version, pkg.version)
   assert.equal(manifest.skills, './skills/')
@@ -76,9 +77,9 @@ test('the manifest matches the package, and the skills are the hook-less ones', 
     'skills/waku-setup/SKILL.md',
     'skills/waku/SKILL.md',
   ])
-  assert.ok(files.get('skills/waku/SKILL.md').equals(shim('skills-without-hooks/waku/SKILL.md')))
-  assert.ok(files.get('skills/waku-setup/SKILL.md').equals(shim('skills/waku-setup/SKILL.md')))
-  assert.ok(files.get('.claude-plugin/icon.png').equals(shim('.claude-plugin/icon.png')))
+  assert.ok(files.get('skills/waku/SKILL.md').equals(full('skills-without-hooks/waku/SKILL.md')))
+  assert.ok(files.get('skills/waku-setup/SKILL.md').equals(full('skills/waku-setup/SKILL.md')))
+  assert.ok(files.get('.claude-plugin/icon.png').equals(full('.claude-plugin/icon.png')))
   assert.deepEqual([...files.keys()].filter((p) => p.startsWith('.codex-plugin/')), [])
 })
 
@@ -135,4 +136,13 @@ test('writing the plugin replaces the folder with exactly these files', () => {
   assert.deepEqual(written.sort(), [...files.keys()].sort())
   assert.equal(existsSync(join(out, 'hooks')), false)
   assert.ok(readFileSync(join(out, '.mcp.json')).equals(files.get('.mcp.json')))
+})
+
+// spec 083: the directory's submission reads a fixed folder, and the
+// `directory` branch holds these files and nothing else.
+test('the directory plugin is exactly these 7 files', () => {
+  assert.deepEqual([...directoryPlugin(root).keys()].sort(), [
+    '.claude-plugin/icon.png', '.claude-plugin/plugin.json', '.mcp.json',
+    'LICENSE', 'README.md', 'skills/waku-setup/SKILL.md', 'skills/waku/SKILL.md',
+  ])
 })

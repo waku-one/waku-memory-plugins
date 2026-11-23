@@ -1,13 +1,13 @@
-// The plugin Anthropic's plugin directory gets, built from the shim's own
-// files (Ian, 2026-11-10).
+// The plugin Anthropic's plugin directory gets, built from the files of the
+// full plugin in plugins/waku/ (Ian, 2026-11-10).
 //
 // Since about 2026-11-05 the directory refuses three things from an
 // organization it has not Verified: every hook, whatever its type (our
 // `mcp_tool` hooks included); every file that is not Markdown, text, JSON,
 // YAML or an allowed image; and every config field outside its lists.
 // Anthropic picks the Verified organizations and takes no requests yet. So
-// the full plugin, hooks and all, stays in waku-one/waku-memory-plugins
-// under plugins/waku, and this module builds the one the directory reads:
+// the full plugin, hooks and all, stays in plugins/waku/, and this module
+// builds the one the directory reads:
 // the same MCP server, the hook-less waku skill (the one the OpenAI
 // directory already gets, since it forbids hooks too), the waku-setup skill
 // and the icon. Codex's manifest and its SVG logo stay out; Codex installs
@@ -15,9 +15,10 @@
 //
 //   node scripts/directory-plugin.mjs <output folder>
 //
-// replaces that folder with exactly these files. The plugins repo's
-// scripts/sync-from-shim.sh runs it into plugins/waku-directory.
-// src/directory-plugin.test.mjs holds one test per directory rule.
+// replaces that folder with exactly these files. The workflow
+// .github/workflows/directory.yml runs scripts/update-directory-branch.sh,
+// which writes them to plugins/waku-directory/ on the `directory` branch.
+// tests/directory-plugin.test.mjs holds one test per directory rule.
 
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -55,8 +56,10 @@ function pick(object, keys) {
 }
 
 // Every file of the directory plugin, by its path inside the plugin.
-export function directoryPlugin(root) {
-  const read = (p) => readFileSync(join(root, p))
+// `repoRoot` is the repository root. The plugin's files come from
+// plugins/waku/, and the README comes from directory/README.md.
+export function directoryPlugin(repoRoot) {
+  const read = (p) => readFileSync(join(repoRoot, 'plugins', 'waku', p))
   const { hooks: _hooks, ...manifest } = JSON.parse(read('.claude-plugin/plugin.json').toString('utf8'))
   const { mcpServers } = JSON.parse(read('.mcp.json').toString('utf8'))
   const servers = Object.fromEntries(
@@ -67,16 +70,16 @@ export function directoryPlugin(root) {
     ['.claude-plugin/icon.png', read('.claude-plugin/icon.png')],
     ['.mcp.json', json({ mcpServers: servers })],
     ['LICENSE', read('LICENSE')],
-    ['README.md', read('directory/README.md')],
+    ['README.md', readFileSync(join(repoRoot, 'directory', 'README.md'))],
     ['skills/waku/SKILL.md', read('skills-without-hooks/waku/SKILL.md')],
     ['skills/waku-setup/SKILL.md', read('skills/waku-setup/SKILL.md')],
   ])
 }
 
 // Replace `out` with exactly the directory plugin's files.
-export function writeDirectoryPlugin(root, out) {
+export function writeDirectoryPlugin(repoRoot, out) {
   rmSync(out, { recursive: true, force: true })
-  for (const [path, body] of directoryPlugin(root)) {
+  for (const [path, body] of directoryPlugin(repoRoot)) {
     const target = join(out, path)
     mkdirSync(dirname(target), { recursive: true })
     writeFileSync(target, body)
