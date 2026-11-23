@@ -880,7 +880,7 @@ export type RunImport = () => Promise<void>
 // capture.ts's own SIGN_IN_QUESTION carries.
 //
 // spec 068 D3: this used to offer capture enable. The plugin already sends
-// each prompt and final reply, and the "Remember from conversations" switch
+// each prompt and final reply, and the "Auto-save from conversations" switch
 // is on by default (D1), so the hook is no longer the step a new person is
 // missing. Their past sessions are: the plugin never sees those. So setup
 // offers the one-time import, and full record stays a command a person

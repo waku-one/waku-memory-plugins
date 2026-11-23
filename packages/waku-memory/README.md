@@ -44,7 +44,7 @@ Revoke the key on the same page when you want it gone.
 ## Commands
 
 Each command is named for what it does. None of them changes
-"Remember from conversations".
+"Auto-save from conversations".
 
 ### Import your history
 
@@ -105,7 +105,7 @@ stops sending its own copy of that session. On Codex without the plugin,
 `full-record on` now removes that entry on a machine where the plugin is not
 installed, and prints the two commands that install the plugin from its
 repository. Codex asks for the same trust step: open `/hooks` and
-trust Waku's four entries once. If "Remember from conversations" is off for
+trust Waku's four entries once. If "Auto-save from conversations" is off for
 an agent, `full-record on` says so, and full record sends nothing for that
 agent until you turn it on.
 
@@ -147,6 +147,6 @@ new entry once in `/hooks`.
 
 `npx waku-memory capture enable`, `capture disable` and `capture status`
 still work for now, and they behave as they did in 0.12. `capture enable`
-also turns "Remember from conversations" on and offers the import, and
+also turns "Auto-save from conversations" on and offers the import, and
 `capture disable` turns it off. They will be removed in a later release, so
 use `import` and `full-record` instead.
