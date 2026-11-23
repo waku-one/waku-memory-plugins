@@ -1,17 +1,19 @@
-// shim/src/mod.test.mjs -- spec 095 D2 and D3: where the Claude Code mod is
+// tests/mod.test.mjs -- spec 095 D2 and D3: where the Claude Code mod is
 // named, and the exact list of things its source may do. A reviewer reads
 // the same list off `claude plugin validate`; here a change to it fails CI.
-// The mod's behaviour is tested in mod-tests/ by `claude plugin test`.
+// The mod's behaviour is tested in tests/mod/ by `claude plugin test`, which
+// scripts/test-mod.sh runs. Paths below are inside the plugin, plugins/waku/.
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { COPY, clean, dataOf, day, fit, isAbsent, line, projectIn, quoteOf } from '../hooks/waku-mod.mjs'
+import { COPY, clean, dataOf, day, fit, isAbsent, line, projectIn, quoteOf } from '../plugins/waku/hooks/waku-mod.mjs'
 import { CALLS, EVENTS, namesOn } from '../scripts/check-mod-calls.mjs'
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
+const root = join(repo, 'plugins', 'waku')
 const text = (p) => readFileSync(join(root, p), 'utf8')
 const json = (p) => JSON.parse(text(p))
 // Comments say what the mod must not do, so the checks read code only.
@@ -139,7 +141,7 @@ test('day and projectIn show a date and a project as a person reads them', () =>
 })
 
 test('every manifest carries the package version', () => {
-  const version = json('package.json').version
+  const version = JSON.parse(readFileSync(join(repo, 'packages/waku-memory/package.json'), 'utf8')).version
   for (const p of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json', '.waku-plugin/plugin.json']) {
     assert.equal(json(p).version, version)
   }

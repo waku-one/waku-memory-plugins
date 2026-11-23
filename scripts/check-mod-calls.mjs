@@ -1,13 +1,14 @@
-// shim/scripts/check-mod-calls.mjs -- spec 095 D3, task A7.
+// scripts/check-mod-calls.mjs -- spec 095 D3, task A7.
 // Asks Claude Code what the mod hooks and calls, and fails when the answer is
-// not the list the spec allows. src/mod.test.mjs reads the source as text;
+// not the list the spec allows. tests/mod.test.mjs reads the source as text;
 // this reads what Claude Code itself finds, which is the list a person sees
 // with `claude plugin validate` before installing.
 import { execFileSync } from 'node:child_process'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+// The plugin's folder, the one Claude Code installs.
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'plugins', 'waku')
 
 export const CALLS = [
   '$.command.register',

@@ -1,7 +1,7 @@
-// shim/src/plugin.test.mjs -- spec 012 §2, Acceptance 2: the plugin files are exact.
+// tests/plugin.test.mjs -- spec 012 §2, Acceptance 2: the plugin files are exact.
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -9,12 +9,16 @@ import { fileURLToPath } from 'node:url'
 // file, imported so the disclosure tests below check what a person is
 // actually shown rather than a copy of it. Node strips the types itself;
 // capture.test.mjs imports these same modules the same way.
-import { DISCLOSURE, FULL_RECORD_DISCLOSURE } from './capture.ts'
-import { importNote } from './cli.ts'
-import { DEFAULT_WINDOW_DAYS, renderBootstrapList } from './bootstrap.ts'
+import { DISCLOSURE, FULL_RECORD_DISCLOSURE } from '../packages/waku-memory/src/capture.ts'
+import { importNote } from '../packages/waku-memory/src/cli.ts'
+import { DEFAULT_WINDOW_DAYS, renderBootstrapList } from '../packages/waku-memory/src/bootstrap.ts'
 
+// `read` and `src` take a path inside the plugin, plugins/waku/. `readJson`
+// takes a path from the repository root.
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const read = (p) => JSON.parse(readFileSync(join(root, p), 'utf8'))
+const plugin = join(root, 'plugins', 'waku')
+const read = (p) => JSON.parse(readFileSync(join(plugin, p), 'utf8'))
+const readJson = (p) => JSON.parse(readFileSync(join(root, p), 'utf8'))
 
 // Enough of a scan for renderBootstrapList to reach its closing lines --
 // on an empty one it returns a single "nothing to import" sentence and
@@ -33,12 +37,13 @@ const ALLOWED = {
 
 test('plugin.json names the package, its version, its skills and its hooks', () => {
   const manifest = read('.codex-plugin/plugin.json')
-  const pkg = read('package.json')
+  const pkg = readJson('packages/waku-memory/package.json')
   assert.equal(manifest.name, 'waku')
   assert.equal(manifest.version, pkg.version)
   assert.equal(manifest.skills, './skills/')
   assert.equal(manifest.hooks, './hooks/codex.json')
-  assert.deepEqual(pkg.files, ['dist', '.codex-plugin', '.claude-plugin', '.waku-plugin', '.mcp.json', 'hooks', 'skills'])
+  // The npm package holds the CLI and no plugin file (spec 083).
+  assert.deepEqual(pkg.files, ['dist'])
 })
 
 test('.mcp.json declares the server both harnesses read, with approval on', () => {
@@ -64,7 +69,7 @@ test('codex.json: three events, one tool, only documented placeholders', () => {
 })
 
 test('SKILL.md has front matter naming the skill', () => {
-  const skill = readFileSync(join(root, 'skills/waku/SKILL.md'), 'utf8')
+  const skill = readFileSync(join(plugin, 'skills/waku/SKILL.md'), 'utf8')
   assert.match(skill, /^---\nname: waku\ndescription: .+\n---\n/)
 })
 
@@ -144,14 +149,13 @@ const WAKU_ALLOWED = {
 
 test('.waku-plugin/plugin.json names the package, its hooks file, the skills and the waku_memory server', () => {
   const manifest = read('.waku-plugin/plugin.json')
-  const pkg = read('package.json')
+  const pkg = readJson('packages/waku-memory/package.json')
   assert.equal(manifest.name, 'waku')
   assert.equal(manifest.version, pkg.version)
   assert.equal(manifest.hooks, './hooks/waku-agent.json')
   assert.equal(manifest.skills, './skills/')
   assert.deepEqual(Object.keys(manifest.mcpServers), ['waku_memory'])
   assert.equal(manifest.mcpServers.waku_memory.url, read('.mcp.json').mcpServers.waku.url)
-  assert.ok(pkg.files.includes('.waku-plugin'))
 })
 
 test('waku-agent.json: three events, the waku_memory server, the harness literal, no PreToolUse', () => {
@@ -178,7 +182,7 @@ test('waku-agent.json: three events, the waku_memory server, the harness literal
 
 test('.claude-plugin/plugin.json names the package, its hooks file and the skills, and declares no server of its own', () => {
   const manifest = read('.claude-plugin/plugin.json')
-  const pkg = read('package.json')
+  const pkg = readJson('packages/waku-memory/package.json')
   assert.equal(manifest.name, 'waku')
   assert.equal(manifest.version, pkg.version)
   // Measured 2026-09-21: Claude Code reads the root .mcp.json and ignores
@@ -197,7 +201,7 @@ test('.claude-plugin carries the directory listing icon and the privacy policy',
   // Anthropic's plugin directory takes .claude-plugin/icon.png as the listing
   // icon, a square PNG of 512 to 2048 px, and reads it only on the first
   // submission. The privacy URL is the one every disclosure points at.
-  const png = readFileSync(join(root, '.claude-plugin/icon.png'))
+  const png = readFileSync(join(plugin, '.claude-plugin/icon.png'))
   assert.equal(png.subarray(1, 4).toString('latin1'), 'PNG')
   const width = png.readUInt32BE(16)
   const height = png.readUInt32BE(20)
@@ -212,7 +216,7 @@ test('no file sits at hooks/hooks.json, the path Claude Code auto-discovers', ()
   // is loaded beside the manifest's own hooks file, so the Codex hooks
   // (harness: "codex", server: "waku") would fire in Claude Code too. The
   // Codex hooks file lives at hooks/codex.json instead, off that path.
-  assert.equal(existsSync(join(root, 'hooks/hooks.json')), false)
+  assert.equal(existsSync(join(plugin, 'hooks/hooks.json')), false)
 })
 
 test('every manifest that runs hooks carries the disclosure sentence', () => {
@@ -230,7 +234,7 @@ test('the Muse manifest matches the package and loads the hook-less skill', () =
   // and cannot call an MCP tool, so this manifest declares none, and its skill
   // is the one that says no brief arrives.
   const manifest = read('.muse-plugin/plugin.json')
-  const pkg = read('package.json')
+  const pkg = readJson('packages/waku-memory/package.json')
   assert.equal(manifest.name, 'waku')
   assert.equal(manifest.version, pkg.version)
   assert.deepEqual(manifest.capabilities.hooks, [])
@@ -242,7 +246,7 @@ test('the Muse manifest matches the package and loads the hook-less skill', () =
     ['skills-without-hooks/waku/SKILL.md', 'skills/waku-setup/SKILL.md'],
   )
   for (const path of [manifest.logo, ...manifest.capabilities.skills.map((s) => s.path)]) {
-    assert.ok(existsSync(join(root, path)), path)
+    assert.ok(existsSync(join(plugin, path)), path)
   }
 })
 
@@ -273,7 +277,7 @@ test('the hook-less skill never says a brief arrives', () => {
 const PROCESSORS = [/Anthropic/, /Voyage/, /Supabase/, /Amazon Web Services/, /Stripe/]
 const PRIVACY_URL = /www\.waku\.one\/privacy/
 
-const src = (p) => readFileSync(join(root, p), 'utf8')
+const src = (p) => readFileSync(join(plugin, p), 'utf8')
 
 // The user-visible strings only, never whole files: capture.ts's comments
 // discuss Anthropic and Voyage at length by design, and a file-wide scan
@@ -418,7 +422,37 @@ test('the setup skill carries a person with only the plugin through save and res
 })
 
 test('SKILL.md says the trust step is Codex only', () => {
-  const skill = readFileSync(join(root, 'skills/waku/SKILL.md'), 'utf8')
+  const skill = readFileSync(join(plugin, 'skills/waku/SKILL.md'), 'utf8')
   assert.match(skill, /Codex asks them to review and trust/)
   assert.match(skill, /Claude Code asks for no such step/)
+})
+
+// spec 083 §3: the npm page's three links. Before 0.15.0 each one pointed
+// at a private repository and answered 404 to a signed-out visitor.
+test('the npm page links to public pages', () => {
+  const pkg = readJson('packages/waku-memory/package.json')
+  assert.equal(pkg.homepage, 'https://www.waku.one/')
+  assert.equal(pkg.bugs, 'https://github.com/waku-one/waku-memory-plugins/issues')
+  assert.deepEqual(pkg.repository, {
+    type: 'git',
+    url: 'git+https://github.com/waku-one/waku-memory-plugins.git',
+    directory: 'packages/waku-memory',
+  })
+  assert.equal(pkg.homepage, readJson('plugins/waku/.claude-plugin/plugin.json').homepage)
+  assert.equal(pkg.bugs, readJson('plugins/waku/.claude-plugin/plugin.json').supportUrl)
+})
+
+// A CRLF file here would reach every person's plugin cache, and the byte
+// comparisons above would fail on it. .gitattributes keeps a checkout LF;
+// this test catches a file that was committed with CRLF.
+test('no text file under plugins/ holds a carriage return', () => {
+  const walk = (dir) =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+      entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
+    )
+  const files = walk(join(root, 'plugins')).filter((file) => !file.endsWith('.png'))
+  assert.ok(files.length > 10)
+  for (const file of files) {
+    assert.equal(readFileSync(file).includes(13), false, file)
+  }
 })
