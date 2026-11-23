@@ -27,10 +27,14 @@ permissions:
 
 jobs:
   publish:
+    # Only `main` publishes. This check is the workflow's own. GitHub makes
+    # a missing environment, with no rule, the first time a run names it, so
+    # the environment's rule alone would not hold before a person sets it.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    # The environment's deployment rule allows only `main`, so a run started
-    # from any other branch stops before its first step. The trusted
-    # publisher on npmjs.com names this environment too.
+    # The `npm` environment's deployment rule allows only `main` too, and
+    # the trusted publisher on npmjs.com names this environment. A person
+    # creates the environment and its rule in the repository's settings.
     environment: npm
     defaults:
       run:

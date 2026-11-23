@@ -102,10 +102,12 @@ and it needs the `claude` command.
 
 ## The `directory` branch
 
-Anthropic's plugin directory reads the plugin with no hooks from
-`plugins/waku-directory/` on the branch `directory`. `directory.yml` builds
-that folder from `plugins/waku` after each push to `main` that changes the
-plugin, and commits it to the branch when the build changed. Nobody pushes to
+Anthropic's plugin directory reads a plugin with no hooks from the folder
+`plugins/waku-directory/`. `directory.yml` builds that folder from
+`plugins/waku` after each push to `main` that changes the plugin, and
+commits it to the branch `directory` when the build changed. The same
+folder also sits on `main` until the directory's submission tracks the
+`directory` branch. Nobody pushes to
 `directory` by hand, because the next build overwrites a hand edit. The
 branch holds no marketplace file, so it cannot be added as a marketplace.
 

@@ -3,10 +3,12 @@
 #
 #   sh scripts/update-directory-branch.sh <remote> <branch>
 #
-# Anthropic's plugin directory reads plugins/waku-directory/ on the
-# `directory` branch. This script builds that folder from the working tree
-# with scripts/directory-plugin.mjs, and makes the branch's tree hold that
-# folder and no other file. The branch has no marketplace file, so nobody
+# Anthropic's plugin directory reads the folder plugins/waku-directory/.
+# This script builds that folder from the working tree with
+# scripts/directory-plugin.mjs, and makes the tree of the `directory`
+# branch hold that folder and no other file. The commit message names the
+# commit that is checked out, so run the script on a clean checkout of main,
+# as the workflow does. The branch has no marketplace file, so nobody
 # can add it as a marketplace and install the hook-less plugin over the full
 # one.
 #
@@ -39,10 +41,18 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"; git update-ref -d refs/directory-build/remote 2>/dev/null || true' EXIT
 node scripts/directory-plugin.mjs "$work/tree/$folder" >/dev/null
 
-# The branch as the remote holds it now, if it exists.
+# The branch as the remote holds it now. `git ls-remote --exit-code` exits
+# with 2 when the remote answers and has no such branch. Any other failure
+# means the remote did not answer, and the script stops.
 parent=
-if git fetch --quiet "$remote" "+refs/heads/$branch:refs/directory-build/remote" 2>/dev/null; then
+status=0
+git ls-remote --exit-code --heads "$remote" "refs/heads/$branch" >/dev/null || status=$?
+if [ "$status" -eq 0 ]; then
+  git fetch --quiet "$remote" "+refs/heads/$branch:refs/directory-build/remote"
   parent=$(git rev-parse refs/directory-build/remote)
+elif [ "$status" -ne 2 ]; then
+  echo "Could not read $branch from $remote." >&2
+  exit 1
 fi
 
 # A tree that holds the build and nothing else, made in an index of its own.

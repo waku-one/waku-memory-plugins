@@ -1,9 +1,9 @@
 name: directory
 
 # Writes the hook-less plugin to the `directory` branch, at
-# plugins/waku-directory/. Anthropic's plugin directory reads that folder
-# on that branch. The branch changes only when the hook-less files change,
-# so a push that touches only packages/ never reaches the directory.
+# plugins/waku-directory/, for Anthropic's plugin directory to read. The
+# branch changes only when the hook-less files change, so a push that
+# touches only packages/ never reaches the directory.
 on:
   push:
     branches: [main]
@@ -30,8 +30,12 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      # The newest commit of main, not the commit that started the run. A
+      # re-run of an older run would otherwise put older files on the
+      # branch, above a newer build.
       - uses: actions/checkout@v5
         with:
+          ref: main
           fetch-depth: 0
 
       - uses: actions/setup-node@v5

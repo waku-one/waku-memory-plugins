@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Census of Codex rollout record shapes (spec 012 §5): the drift alarm for
-// the codex-dialogue-v1 rule (shim/src/dialogue-codex.ts). When argv[2] is
+// the codex-dialogue-v1 rule (packages/waku-memory/src/dialogue-codex.ts). When argv[2] is
 // a directory: walks recursively and censuses every rollout-*.jsonl file
 // under it (real rollouts are named rollout-<timestamp>-<uuid>.jsonl).
 // When argv[2] is a file: censuses that one file regardless of its name
@@ -17,7 +17,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
-// The record shapes codex-dialogue-v1 (shim/src/dialogue-codex.ts) already
+// The record shapes codex-dialogue-v1 (packages/waku-memory/src/dialogue-codex.ts) already
 // accounts for -- kept, or knowingly dropped -- per spec 012 §5's table.
 // A `type` in this set is known regardless of its payload; for
 // `response_item`, only these `payload.type` values (and anything ending

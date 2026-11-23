@@ -76,7 +76,7 @@ test('SKILL.md has front matter naming the skill', () => {
 // ---- description: the disclosure gap (2026-09-10, status.md item 9) ----
 //
 // plugin.json's description is what a person installing from Codex's
-// Plugins directory sees before anything else -- shim/src/capture.test.mjs
+// Plugins directory sees before anything else -- packages/waku-memory/src/capture.test.mjs
 // pins the same two facts in DISCLOSURE this way, matching load-bearing
 // phrases rather than the whole string, and these mirror that shape.
 //
