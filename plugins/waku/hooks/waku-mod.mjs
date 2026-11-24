@@ -94,7 +94,9 @@ const BADGE = {
   profile: { word: COPY.profile, name: COPY.profile, color: 'merged' },
   rule: { word: COPY.rule, name: COPY.rules, color: 'warning' },
   state: { word: COPY.status, name: COPY.status, color: 'success' },
-  knowledge: { word: COPY.knowledge, name: COPY.knowledge, color: 'suggestion' },
+  // Not 'suggestion': the Desktop app draws that key red, and a red badge
+  // reads as an error (Ian's screenshot, 2026-11-24).
+  knowledge: { word: COPY.knowledge, name: COPY.knowledge, color: 'permission' },
   episode: { word: COPY.episode, name: COPY.episodes, color: 'subtle' },
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
@@ -142,6 +144,32 @@ export function clean(value, max) {
 }
 
 /** The same, on one line. */
+// A skill file kept as a memory opens with YAML front matter. Its name and
+// its description say more than the dashes do.
+const FRONT = /^---\s*\n([\s\S]*?)\n---/
+
+/**
+ * A memory's first line as a list row shows it: the front matter's name and
+ * description in place of the front matter, and Markdown's marks taken out.
+ */
+export function headline(value) {
+  let text = String(value ?? '')
+  const front = FRONT.exec(text)
+  if (front) {
+    const field = key => (new RegExp(`^${key}:\\s*(.+)$`, 'm').exec(front[1])?.[1] ?? '').replace(/^["']|["']$/g, '')
+    const named = [field('name'), field('description')].filter(Boolean).join(' — ')
+    text = named !== '' ? named : text.slice(front[0].length)
+  }
+  text = text
+    .replace(/^\s*#{1,6}\s+/gm, '')
+    .replace(/`+/g, '')
+    .replace(/\*\*|__/g, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+
+  return line(text, 400)
+}
+
 export function line(value, max = 400) {
   return clean(String(value ?? '').replace(/\s+/g, ' ').trim(), max)
 }
@@ -625,7 +653,7 @@ function card($, e, kit, memory, room) {
     .filter(Boolean)
     .join(' · ')
   // The terminal cuts by columns here; a desktop cuts the label at its own edge.
-  const label = e.surface === 'terminal' ? fit(memory.body, room) : line(memory.body, 400)
+  const label = e.surface === 'terminal' ? fit(headline(memory.body), room) : headline(memory.body)
 
   return Box({
     key: `card-${memory.id}`,
@@ -635,6 +663,9 @@ function card($, e, kit, memory, room) {
       Box({
         flexDirection: 'row',
         columnGap: 'sm',
+        // A desktop insets a plain Button's label; the line under it starts
+        // where the label starts. The terminal draws the label at the edge.
+        ...(e.surface === 'terminal' ? {} : { paddingLeft: 'sm' }),
         children: [
           Text({ color: badge.color, size: 'caption', weight: 'medium', children: [badge.word] }),
           where !== '' ? Text({ dimColor: true, size: 'caption', children: [where] }) : null,

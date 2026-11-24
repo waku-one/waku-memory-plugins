@@ -47,14 +47,21 @@ configuration only. After you update, Claude Code shows the row when you are
 not signed in to Waku, and `/waku-memories` opens the pane. If you do not
 want the program on your machine, turn the plugin off with `/plugin`.
 
+### New in 0.15.3
+
+A list row shows a skill file by its name and description, and shows a
+memory's first line without Markdown's marks. Knowledge badges are blue on
+the Desktop app, where they were red.
+
 ### New in 0.15.2
 
 The pane gains a search field, a category list and a project list. Each
 memory shows as a card with its category and the date it was saved, and an
 opened memory links to its page on www.waku.one. The hooks send the
 plugin's version number with each call. Claude Code updates this plugin by
-itself only after you run `/plugin`, open Marketplaces, choose waku-memory
-and turn auto-update on.
+itself only after you turn auto-update on: run `claude` in a terminal, type
+`/plugin`, open Marketplaces, choose waku-memory and turn auto-update on.
+The Desktop app has no such setting.
 
 ### New in 0.15.0
 
