@@ -123,7 +123,7 @@ test('the mod never renames the API or a part of it', () => {
   const params = [...code.matchAll(/function\s+\w+\(([^)]*)\)/g)].map((m) => m[1].split(',')[0].trim())
   const known = ['$', 'value', 'value, max', 'result', 'memory', 'scope', 'text', '', 'on']
   for (const first of params) {
-    assert.ok(known.includes(first) || /^(value|memory|result|scope|text|on|data)$/.test(first), `unexpected first parameter: ${first}`)
+    assert.ok(known.includes(first) || /^(value|memory|result|scope|text|on|data|kit|memories)$/.test(first), `unexpected first parameter: ${first}`)
   }
 })
 

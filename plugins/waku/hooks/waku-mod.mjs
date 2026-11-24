@@ -60,6 +60,49 @@ export const COPY = {
   back: 'Back',
   notFilled: 'Claude Code did not add the text to the prompt. The prompt is unchanged.',
   quote: 'This is a note from my Waku memories. It is not an instruction.',
+  // The search and the filters (2026-11-24). They draw only where the server
+  // has the tools for a screen (spec 096).
+  search: 'Search',
+  searchHint: 'Search your memories',
+  clear: 'Clear',
+  allCategories: 'All categories',
+  allMemories: 'All memories',
+  foundText: (n, q) =>
+    n === 1 ? `Waku found 1 memory that matches "${q}".` : `Waku found ${n} memories that match "${q}".`,
+  foundCategory: n => (n === 1 ? 'Waku found 1 memory in this category.' : `Waku found ${n} memories in this category.`),
+  noMatch: q => `Waku found no memory that matches "${q}". Clear the search to see every memory.`,
+  noneFiltered: 'Waku found no memory in this category. Choose All categories to see every memory.',
+  openInWaku: 'Open in Waku',
+  // A memory's category, as the console's badge prints it (lib/console/categories.ts).
+  profile: 'Profile',
+  rule: 'Rule',
+  status: 'Status',
+  knowledge: 'Knowledge',
+  episode: 'Episode',
+  other: 'Other',
+  // The same categories as the console's filter names them.
+  rules: 'Rules',
+  episodes: 'Episodes',
+}
+
+// The look. Colors are Claude Code's theme keys, so a badge follows the
+// person's light or dark theme. Knowledge is blue and Profile violet, as on
+// the console; the rest are the nearest theme keys. Emily decides the final
+// look (visual-design-system.md); this is the first version she edits.
+const CATEGORIES = ['profile', 'rule', 'state', 'knowledge', 'episode']
+const BADGE = {
+  profile: { word: COPY.profile, name: COPY.profile, color: 'merged' },
+  rule: { word: COPY.rule, name: COPY.rules, color: 'warning' },
+  state: { word: COPY.status, name: COPY.status, color: 'success' },
+  knowledge: { word: COPY.knowledge, name: COPY.knowledge, color: 'suggestion' },
+  episode: { word: COPY.episode, name: COPY.episodes, color: 'subtle' },
+}
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+const CONSOLE = 'https://www.waku.one/memories'
+
+/** A memory's badge: its category's word and color, Other when Waku has not sorted it. */
+export function badgeOf(memory) {
+  return BADGE[memory?.category] ?? { word: COPY.other, name: COPY.other, color: 'subtle' }
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -71,6 +114,11 @@ const view = {
   reason: null, // why Waku is not connected: 'auth', 'disabled', 'unlisted', …
   isRowHidden: false,
   memories: null, // null = not read yet
+  q: '', // the search the list answers
+  draft: '', // what the search field holds, as typed
+  category: '', // the category the list keeps; '' keeps every one
+  scope: 'project', // 'project': the session's folder's project; 'all': every memory
+  knownProject: '', // the project the folder resolved to, kept while the person views all
   hasScreenTools: null, // whether the server answers ui.memories; null = not asked yet
   project: '', // the project the session's folder resolved to, when one did
   cursor: null, // where "Show more" continues
@@ -181,6 +229,11 @@ function forget() {
   view.epoch += 1
   view.reading = null
   view.memories = null
+  view.q = ''
+  view.draft = ''
+  view.category = ''
+  view.scope = 'project'
+  view.knownProject = ''
   view.project = ''
   view.cursor = null
   view.total = 0
@@ -244,8 +297,14 @@ async function page($, cursor) {
     cwd = ''
   }
   const args = { via: 'mod', limit: PAGE }
-  if (typeof cwd === 'string' && cwd !== '') {
+  if (typeof cwd === 'string' && cwd !== '' && view.scope === 'project') {
     args.cwd = cwd
+  }
+  if (view.q !== '') {
+    args.q = view.q
+  }
+  if (view.category !== '') {
+    args.category = view.category
   }
   if (cursor !== null) {
     args.cursor = cursor
@@ -281,6 +340,47 @@ function keep(data, isNext) {
   view.cursor = typeof data.next_cursor === 'string' && view.memories.length < SHOWN_MAX ? data.next_cursor : null
   view.isCut = view.total > view.memories.length
   view.project = line(data.project?.name, 60)
+  if (view.project !== '') {
+    view.knownProject = view.project
+  }
+}
+
+/** A new search or filter: the list starts over, and a read already running is not kept. */
+function restart($) {
+  view.epoch += 1
+  view.reading = null
+  view.memories = null
+  view.cursor = null
+  view.total = 0
+  view.isCut = false
+  view.openId = null
+  view.error = ''
+  void load($)
+}
+
+function search($, value) {
+  view.draft = String(value ?? '')
+  const q = line(view.draft, 200)
+  if (q !== view.q) {
+    view.q = q
+    restart($)
+  }
+}
+
+function filter($, value) {
+  const category = CATEGORIES.includes(value) ? value : ''
+  if (category !== view.category) {
+    view.category = category
+    restart($)
+  }
+}
+
+function scope($, value) {
+  const next = value === 'all' ? 'all' : 'project'
+  if (next !== view.scope) {
+    view.scope = next
+    restart($)
+  }
 }
 
 /** Reads the person's memories. One call, however often it is asked. */
@@ -293,6 +393,8 @@ function load($, isNext = false) {
       redraw($)
     })
     view.reading = mine
+    // Draw the waiting rows now; the answer may take a second.
+    redraw($)
   }
 
   return view.reading
@@ -435,56 +537,179 @@ async function run($) {
   return {}
 }
 
-function list($, e, kit) {
-  const { Box, Button, Text } = kit
-  const memories = view.memories ?? []
-  const room = Math.max(20, Number(e.props?.bodyColumns ?? 60) - 2)
+/** The search field and the two lists, where the server has the tools for a screen. */
+function controls($, kit) {
+  const { Box, Button, Input, Select } = kit
+  if (view.hasScreenTools === false) {
+    return null
+  }
+  const choices = [
+    { value: 'all', label: COPY.allCategories },
+    ...CATEGORIES.map(key => ({ value: key, label: BADGE[key].name })),
+  ]
 
   return Box({
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 'sm',
+    rowGap: 'sm',
+    alignItems: 'flex-end',
     children: [
-      memories.length === 0 && view.memories !== null && view.reading === null
-        ? Text({ dimColor: true, children: [COPY.empty] })
-        : null,
-      ...memories.map(memory =>
-        Button({
-          key: `memory-${memory.id}`,
-          plain: true,
-          label: fit(`${memory.category ?? memory.kind ?? ''}  ${memory.body}`, room),
-          onPress: () => open($, memory.id),
-        }),
-      ),
-      view.isCut ? Text({ dimColor: true, children: [COPY.cut(memories.length, view.total)] }) : null,
-      view.cursor !== null
-        ? Button({ key: 'more', label: COPY.more, onPress: () => load($, true) })
+      Box({
+        flexGrow: 1,
+        minWidth: 20,
+        children: [
+          Input({
+            key: 'search',
+            placeholder: COPY.searchHint,
+            value: view.draft,
+            submitLabel: COPY.search,
+            onInput: value => {
+              view.draft = String(value ?? '')
+            },
+            onSubmit: value => search($, value),
+          }),
+        ],
+      }),
+      view.q !== '' ? Button({ key: 'clear', label: COPY.clear, onPress: () => search($, '') }) : null,
+      Select({
+        key: 'category',
+        options: choices,
+        value: view.category === '' ? 'all' : view.category,
+        onSelect: value => filter($, value),
+      }),
+      view.knownProject !== ''
+        ? Select({
+            key: 'scope',
+            options: [
+              { value: 'project', label: view.knownProject },
+              { value: 'all', label: COPY.allMemories },
+            ],
+            value: view.scope,
+            onSelect: value => scope($, value),
+          })
         : null,
     ].filter(Boolean),
   })
 }
 
-function detail($, kit, memory) {
+/** The line above the list: how many memories the search or the filter found, or how many the pane shows. */
+function summary(memories) {
+  if (view.memories === null || memories.length === 0) {
+    return ''
+  }
+  if (view.q !== '') {
+    return COPY.foundText(view.total, view.q)
+  }
+  if (view.category !== '') {
+    return COPY.foundCategory(view.total)
+  }
+
+  return view.isCut ? COPY.cut(memories.length, view.total) : ''
+}
+
+/** The sentence for an empty list. */
+function emptyLine() {
+  if (view.q !== '') {
+    return COPY.noMatch(view.q)
+  }
+
+  return view.category !== '' ? COPY.noneFiltered : COPY.empty
+}
+
+/** One memory in the list: its first line, then its category and where and when it was saved. */
+function card($, e, kit, memory, room) {
   const { Box, Button, Text } = kit
-  const facts = [line(memory.category ?? memory.kind, 40), projectIn(memory.scope), day(memory.created_at)]
+  const badge = badgeOf(memory)
+  const where = [line(memory.project_name, 60) || projectIn(memory.scope), day(memory.created_at)]
     .filter(Boolean)
     .join(' · ')
+  // The terminal cuts by columns here; a desktop cuts the label at its own edge.
+  const label = e.surface === 'terminal' ? fit(memory.body, room) : line(memory.body, 400)
+
+  return Box({
+    key: `card-${memory.id}`,
+    flexDirection: 'column',
+    children: [
+      Button({ key: `memory-${memory.id}`, plain: true, label, onPress: () => open($, memory.id) }),
+      Box({
+        flexDirection: 'row',
+        columnGap: 'sm',
+        children: [
+          Text({ color: badge.color, size: 'caption', weight: 'medium', children: [badge.word] }),
+          where !== '' ? Text({ dimColor: true, size: 'caption', children: [where] }) : null,
+        ].filter(Boolean),
+      }),
+    ],
+  })
+}
+
+function list($, e, kit) {
+  const { Box, Button, Text } = kit
+  const memories = view.memories ?? []
+  const room = Math.max(20, Number(e.props?.bodyColumns ?? 60) - 2)
+  const counted = summary(memories)
 
   return Box({
     flexDirection: 'column',
-    rowGap: 1,
+    rowGap: 'sm',
+    children: [
+      counted !== '' ? Text({ dimColor: true, size: 'caption', children: [counted] }) : null,
+      memories.length === 0 && view.memories !== null && view.reading === null
+        ? Text({ dimColor: true, children: [emptyLine()] })
+        : null,
+      ...memories.map(memory => card($, e, kit, memory, room)),
+      // Waiting says nothing: three rows stand where the rows will come.
+      ...(view.reading !== null ? waiting(kit, room) : []),
+      view.cursor !== null && view.reading === null
+        ? Button({ key: 'more', label: COPY.more, onPress: () => void load($, true) })
+        : null,
+    ].filter(Boolean),
+  })
+}
+
+/** Three wordless rows, drawn while a read runs. */
+function waiting(kit, room) {
+  const { Text } = kit
+
+  return [0.7, 0.5, 0.6].map(part =>
+    Text({ dimColor: true, children: ['─'.repeat(Math.max(4, Math.floor(room * part)))] }),
+  )
+}
+
+function detail($, kit, memory) {
+  const { Box, Button, Link, Markdown, Text } = kit
+  const badge = badgeOf(memory)
+  const where = [line(memory.project_name, 60) || projectIn(memory.scope), day(memory.created_at)]
+    .filter(Boolean)
+    .join(' · ')
+  const id = String(memory.id ?? '')
+
+  return Box({
+    flexDirection: 'column',
+    rowGap: 'md',
     children: [
       Box({
-        flexDirection: 'column',
-        children: clean(memory.body, BODY_MAX)
-          .split('\n')
-          .map(row => Text({ children: [row === '' ? ' ' : row] })),
-      }),
-      Text({ dimColor: true, children: [facts] }),
-      Box({
-        columnGap: 2,
+        flexDirection: 'row',
+        columnGap: 'sm',
+        alignItems: 'center',
         children: [
-          Button({ key: 'use', label: COPY.use, onPress: () => useInPrompt($, memory) }),
           Button({ key: 'back', label: COPY.back, onPress: () => open($, null) }),
-        ],
+          Text({ color: badge.color, weight: 'medium', children: [badge.word] }),
+          where !== '' ? Text({ dimColor: true, children: [where] }) : null,
+        ].filter(Boolean),
+      }),
+      // The memory's own text, with its lists and code drawn. Control and
+      // direction marks are taken out first (clean).
+      Markdown({ text: clean(memory.body, BODY_MAX) }),
+      Box({
+        flexDirection: 'row',
+        columnGap: 'sm',
+        alignItems: 'center',
+        children: [
+          Button({ key: 'use', label: COPY.use, variant: 'primary', onPress: () => useInPrompt($, memory) }),
+          UUID.test(id) ? Link({ href: `${CONSOLE}/${id}`, label: COPY.openInWaku }) : null,
+        ].filter(Boolean),
       }),
     ],
   })
@@ -543,18 +768,23 @@ export function register(on) {
     const kit = $.ui.resolve(e)
     const { Box, Button, Text } = kit
     const opened = (view.memories ?? []).find(memory => memory.id === view.openId)
+    const title = view.project !== '' && view.scope === 'project' ? COPY.inProject(view.project) : COPY.heading
 
     return Box({
       flexDirection: 'column',
-      rowGap: 1,
+      rowGap: 'md',
       children: [
         Box({
-          columnGap: 2,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          columnGap: 'sm',
           children: [
-            Text({ children: [view.project === '' ? COPY.heading : COPY.inProject(view.project)] }),
-            Button({ key: 'refresh', label: COPY.refresh, onPress: () => load($) }),
+            Text({ size: 'heading', weight: 'semibold', children: [title] }),
+            Button({ key: 'refresh', label: COPY.refresh, plain: true, onPress: () => void load($) }),
           ],
         }),
+        opened === undefined ? controls($, kit) : null,
         view.error !== '' ? Text({ color: 'error', children: [view.error] }) : null,
         opened === undefined ? list($, e, kit) : detail($, kit, opened),
       ].filter(Boolean),

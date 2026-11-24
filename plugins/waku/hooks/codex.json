@@ -13,6 +13,7 @@
             "statusMessage": "Waku memory",
             "input": {
               "harness": "codex",
+              "plugin_version": "0.15.2",
               "event": "${hook_event_name}",
               "session_id": "${session_id}",
               "cwd": "${cwd}",
@@ -32,6 +33,7 @@
             "timeout": 10,
             "input": {
               "harness": "codex",
+              "plugin_version": "0.15.2",
               "event": "${hook_event_name}",
               "session_id": "${session_id}",
               "cwd": "${cwd}",
@@ -52,6 +54,7 @@
             "timeout": 10,
             "input": {
               "harness": "codex",
+              "plugin_version": "0.15.2",
               "event": "${hook_event_name}",
               "session_id": "${session_id}",
               "cwd": "${cwd}",
