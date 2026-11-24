@@ -14,7 +14,9 @@ next one, on any machine.
   a session brings a short brief of the project's memories, a compaction
   brings it again, and each turn's reply is sent for extraction. "Remember
   from conversations" is on by default, and you can turn it off for each
-  agent at https://www.waku.one/integrations.
+  agent at https://www.waku.one/integrations. Each call also sends the
+  plugin's version number, so Waku can tell you when your plugin is out of
+  date.
 - One skill that tells the agent when to search and when to remember.
 
 The plugin installs no package. The hooks and tools reach the server through
@@ -24,9 +26,11 @@ the sign-in you open.
 runs the mod inside itself (Claude Code 2.1.326 or later). The mod does two
 things. It shows a row above the prompt while you are not signed in to Waku.
 It adds `/waku-memories`, which opens a pane with up to 80 of your memories.
+In the pane you can search your memories, keep one category, and switch
+between the folder's project and every memory.
 
 The mod calls Waku only when you run `/waku-memories`, press Refresh or
-"Show more", or open a memory. It sends the folder your session runs in, and
+"Show more", search, choose a category or a project, or open a memory. It sends the folder your session runs in, and
 the pane lists that folder's project. A read costs no credit, adds no row to
 Matches, and adds one row to Usage. Claude Code passes the mod no prompt, no
 reply and no tool call. When you press "Use in prompt", Claude Code tells the
@@ -42,6 +46,15 @@ The plugin now carries the mod described above. Earlier versions held
 configuration only. After you update, Claude Code shows the row when you are
 not signed in to Waku, and `/waku-memories` opens the pane. If you do not
 want the program on your machine, turn the plugin off with `/plugin`.
+
+### New in 0.15.2
+
+The pane gains a search field, a category list and a project list. Each
+memory shows as a card with its category and the date it was saved, and an
+opened memory links to its page on www.waku.one. The hooks send the
+plugin's version number with each call. Claude Code updates this plugin by
+itself only after you run `/plugin`, open Marketplaces, choose waku-memory
+and turn auto-update on.
 
 ### New in 0.15.0
 

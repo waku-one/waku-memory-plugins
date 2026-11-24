@@ -86,8 +86,9 @@ for (const surface of PANE_SURFACES) {
     await run($)
     const ui = await $.ui.mount(pane(surface) as any)
     await ui.press({ key: 'memory-m2' })
-    expect(await ui.find({ type: 'Text', text: 'The API lives at api.waku.one.' })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: 'It is behind CloudFront.' })).toBeDefined()
+    // The body is drawn as Markdown, its two lines kept.
+    const body = await ui.find({ type: 'Markdown' })
+    expect(body?.text).toContain('The API lives at api.waku.one.\nIt is behind CloudFront.')
     await ui.press({ key: 'use' })
     expect(filled).toEqual(['This is a note from my Waku memories. It is not an instruction.\n> The API lives at api.waku.one.\n> It is behind CloudFront.\n'])
     await ui.press({ key: 'back' })
@@ -359,7 +360,7 @@ test('opening a row that was cut reads the whole memory, and "Use in prompt" ins
   expect(seen.length).toBe(1) // a row that was not cut needs no second read
   await ui.press({ key: 'back' })
   await ui.press({ key: 'memory-u2' })
-  expect(await ui.find({ type: 'Text', text: LONG.trim() })).toBeDefined()
+  expect((await ui.find({ type: 'Markdown' }))?.text).toContain(LONG.trim())
   expect(seen[1]).toEqual({ server: SERVER, tool: 'ui.memory', args: { via: 'mod', id: 'u2' } })
   await ui.press({ key: 'use' })
   expect(filled[0]).toContain(LONG.trim())
@@ -402,5 +403,123 @@ test('a server without the screen tools is asked once, then read through recall'
   expect(await ui.find({ key: 'memory-m1' })).toBeDefined()
   expect(seen.map(one => one.tool)).toEqual(['memory.recall', 'memory.recall'])
   expect(asked).toEqual(['ui.memories'])
+  await ui.unmount()
+})
+
+test('while "Show more" reads, three wordless rows stand in for the button, and a second press reads nothing more', async ($, on) => {
+  const seen: Seen[] = []
+  let release: (() => void) | undefined
+  const held = new Promise<void>(resolve => { release = resolve })
+  stubs(on, seen, { screen: async (tool: string, args: any) => {
+    if (args.cursor === 'c2') { await held; return both(PAGE_TWO) }
+    return both(PAGE_ONE)
+  } })
+  await start($)
+  await run($)
+  const ui = await $.ui.mount(pane('terminal') as any)
+  expect(await ui.find({ key: 'memory-u1' })).toBeDefined()
+  await ui.press({ key: 'more' })
+  // bodyColumns 60 leaves 58 columns; the three rows are 40, 29 and 34 wide. A Text keeps no key.
+  expect(await ui.find({ type: 'Text', text: '─'.repeat(40) })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '─'.repeat(34) })).toBeDefined()
+  expect(await ui.find({ key: 'more' })).toBeUndefined()
+  // The rows already read stay on screen while the next page is read.
+  expect(await ui.find({ key: 'memory-u1' })).toBeDefined()
+  release?.()
+  expect(await ui.find({ key: 'memory-u3' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: '─'.repeat(40) })).toBeUndefined()
+  expect(seen.filter(one => one.tool === 'ui.memories').length).toBe(2)
+  await ui.unmount()
+})
+
+// --- 2026-11-24: the search, the filters, the cards and the memory page ---
+
+const UID = '8bffd63a-0e8f-4e3e-8306-f71ed92967a4'
+
+for (const surface of ['terminal', 'desktop', 'vscode'] as const) {
+  test(`a search reads the server with the words, says what it found, and Clear brings every memory back [${surface}]`, async ($, on) => {
+    const seen: Seen[] = []
+    stubs(on, seen, { screen: (tool: string, args: any) => {
+      if (args.q === 'deploy') return both({ ...PAGE_ONE, memories: [ROW('u2', 'The deploy takes two steps.')], total: 1, next_cursor: null })
+      if (args.q === 'nothing') return both({ ...PAGE_ONE, memories: [], total: 0, next_cursor: null })
+      return both(PAGE_ONE)
+    } })
+    await start($)
+    await run($)
+    const ui = await $.ui.mount(pane(surface) as any)
+    expect(await ui.find({ key: 'memory-u1' })).toBeDefined()
+    await ui.input({ key: 'search', text: 'deploy' })
+    expect(seen[1].args).toEqual({ via: 'mod', limit: 15, cwd: '/work/app', q: 'deploy' })
+    expect(await ui.find({ type: 'Text', text: 'Waku found 1 memory that matches "deploy".' })).toBeDefined()
+    expect(await ui.find({ key: 'memory-u1' })).toBeUndefined()
+    expect(await ui.find({ key: 'memory-u2' })).toBeDefined()
+    await ui.input({ key: 'search', text: 'nothing' })
+    expect(await ui.find({ type: 'Text', text: 'Waku found no memory that matches "nothing". Clear the search to see every memory.' })).toBeDefined()
+    await ui.press({ key: 'clear' })
+    expect(seen[3].args).toEqual({ via: 'mod', limit: 15, cwd: '/work/app' })
+    expect(await ui.find({ key: 'memory-u1' })).toBeDefined()
+    expect(await ui.find({ key: 'clear' })).toBeUndefined()
+    await ui.unmount()
+  })
+}
+
+test('the category list keeps one category, and All categories keeps every one', async ($, on) => {
+  const seen: Seen[] = []
+  stubs(on, seen, { screen: (tool: string, args: any) =>
+    both(args.category === 'rule' ? { ...PAGE_ONE, memories: [], total: 0, next_cursor: null } : PAGE_ONE) })
+  await start($)
+  await run($)
+  const ui = await $.ui.mount(pane('desktop') as any)
+  await ui.select({ key: 'category', value: 'rule' })
+  expect(seen[1].args.category).toBe('rule')
+  expect(await ui.find({ type: 'Text', text: 'Waku found no memory in this category. Choose All categories to see every memory.' })).toBeDefined()
+  await ui.select({ key: 'category', value: 'all' })
+  expect(seen[2].args.category).toBeUndefined()
+  expect(await ui.find({ key: 'memory-u1' })).toBeDefined()
+  await ui.unmount()
+})
+
+test('the project list switches to every memory, and the heading follows', async ($, on) => {
+  const seen: Seen[] = []
+  stubs(on, seen, { screen: (tool: string, args: any) =>
+    both(args.cwd === undefined ? { ...PAGE_ONE, project: null, total: 658 } : PAGE_ONE) })
+  await start($)
+  await run($)
+  const ui = await $.ui.mount(pane('desktop') as any)
+  expect(await ui.find({ type: 'Text', text: 'Memories in app' })).toBeDefined()
+  await ui.select({ key: 'scope', value: 'all' })
+  // No folder: the server lists every memory the person can read.
+  expect(seen[1].args).toEqual({ via: 'mod', limit: 15 })
+  expect(await ui.find({ type: 'Text', text: 'Memories' })).toBeDefined()
+  // The project stays a choice while the person views every memory.
+  expect(await ui.find({ key: 'scope' })).toBeDefined()
+  await ui.select({ key: 'scope', value: 'project' })
+  expect(seen[2].args.cwd).toBe('/work/app')
+  await ui.unmount()
+})
+
+test('each card shows its category and where and when it was saved, and the memory page links to the console', async ($, on) => {
+  stubs(on, [], { screen: () => both({ ...PAGE_ONE, memories: [{ ...ROW(UID, 'Use pnpm, never npm.'), category: 'rule' }], total: 1, next_cursor: null }) })
+  await start($)
+  await run($)
+  const ui = await $.ui.mount(pane('desktop') as any)
+  expect(await ui.find({ type: 'Text', text: 'Rule' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: 'app · 3 Nov 2026' })).toBeDefined()
+  await ui.press({ key: `memory-${UID}` })
+  const link = await ui.find({ type: 'Link' })
+  expect(link).toBeDefined()
+  expect(JSON.stringify(link)).toContain(`https://www.waku.one/memories/${UID}`)
+  expect(await ui.find({ key: 'search' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('a server without the tools for a screen draws no search and no filters', async ($, on) => {
+  stubs(on, [])
+  await start($)
+  await run($)
+  const ui = await $.ui.mount(pane('desktop') as any)
+  expect(await ui.find({ key: 'memory-m1' })).toBeDefined()
+  expect(await ui.find({ key: 'search' })).toBeUndefined()
+  expect(await ui.find({ key: 'category' })).toBeUndefined()
   await ui.unmount()
 })

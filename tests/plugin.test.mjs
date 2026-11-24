@@ -456,3 +456,22 @@ test('no text file under plugins/ holds a carriage return', () => {
     assert.equal(readFileSync(file).includes(13), false, file)
   }
 })
+
+// spec 104 D1: a release reaches a person only when they update, and the
+// server learns which version a person runs from this field alone.
+test('every hook sends the plugin version, and it is the package version', () => {
+  const version = readJson('packages/waku-memory/package.json').version
+  for (const file of ['hooks/claude-code.json', 'hooks/codex.json', 'hooks/waku-agent.json']) {
+    const inputs = Object.values(read(file).hooks)
+      .flat()
+      .flatMap((group) => group.hooks)
+      .map((hook) => hook.input)
+    assert.ok(inputs.length >= 3, file)
+    for (const input of inputs) {
+      assert.equal(input.plugin_version, version, `${file} ${input.event}`)
+      // `version` is the npm program's field; a plugin hook that sent it
+      // would be read as that program.
+      assert.equal(input.version, undefined, file)
+    }
+  }
+})
