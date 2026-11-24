@@ -190,4 +190,10 @@ test('headline shows a skill file by its name and description, and drops Markdow
   assert.equal(headline('## Title\n- **Bold** item [link](https://x.example)'), 'Title Bold item link')
   assert.equal(headline('清理 waku-memory-context 等仓库'), '清理 waku-memory-context 等仓库')
   assert.equal(headline(undefined), '')
+  // The server cut the row at 200 characters, inside the front matter.
+  assert.equal(
+    headline('---\nname: new-tool\ndescription: Add a new tool to Waku, with its schema, its handler and its tests, and wire it'),
+    'new-tool — Add a new tool to Waku, with its schema, its handler and its tests, and wire it',
+  )
+  assert.equal(headline('---\r\nname: crlf\r\n---\r\nBody'), 'crlf')
 })
