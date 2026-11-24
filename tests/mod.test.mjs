@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { COPY, clean, dataOf, day, fit, isAbsent, line, projectIn, quoteOf } from '../plugins/waku/hooks/waku-mod.mjs'
+import { COPY, clean, dataOf, day, fit, headline, isAbsent, line, projectIn, quoteOf } from '../plugins/waku/hooks/waku-mod.mjs'
 import { CALLS, EVENTS, namesOn } from '../scripts/check-mod-calls.mjs'
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -176,4 +176,18 @@ test('isAbsent reads a missing tool from a refusal and from a failure, and nothi
   assert.equal(isAbsent({ isError: false, content: [{ type: 'text', text: 'unknown tool' }] }), false)
   assert.equal(isAbsent(undefined, new Error('socket closed')), false)
   assert.equal(isAbsent(undefined), false)
+})
+
+// Ian's pane on 2026-11-24 showed skill files as "--- name: weekly-brief
+// description: ..." and code as `id IN (...)`. A list row shows the words.
+test('headline shows a skill file by its name and description, and drops Markdown marks', () => {
+  assert.equal(
+    headline('---\nname: weekly-brief\ndescription: "Weekly or daily brief"\n---\n# Body'),
+    'weekly-brief — Weekly or daily brief',
+  )
+  assert.equal(headline('---\nfoo: 1\n---\nReal text here'), 'Real text here')
+  assert.equal(headline('In search, writing `id IN (SELECT fn(...))` is slow'), 'In search, writing id IN (SELECT fn(...)) is slow')
+  assert.equal(headline('## Title\n- **Bold** item [link](https://x.example)'), 'Title Bold item link')
+  assert.equal(headline('清理 waku-memory-context 等仓库'), '清理 waku-memory-context 等仓库')
+  assert.equal(headline(undefined), '')
 })

@@ -523,3 +523,15 @@ test('a server without the tools for a screen draws no search and no filters', a
   expect(await ui.find({ key: 'category' })).toBeUndefined()
   await ui.unmount()
 })
+
+test('a card shows a skill file by its name and description, and lines up under its label on a desktop', async ($, on) => {
+  stubs(on, [], { screen: () => both({ ...PAGE_ONE, memories: [ROW('s1', '---\nname: weekly-brief\ndescription: Weekly brief\n---\nBody')], total: 1, next_cursor: null }) })
+  await start($)
+  await run($)
+  for (const surface of ['desktop', 'terminal'] as const) {
+    const ui = await $.ui.mount(pane(surface) as any)
+    const row = await ui.find({ key: 'memory-s1' })
+    expect(JSON.stringify(row)).toContain('weekly-brief — Weekly brief')
+    await ui.unmount()
+  }
+})
