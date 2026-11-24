@@ -36,7 +36,8 @@ Matches, and adds one row to Usage. Claude Code passes the mod no prompt, no
 reply and no tool call. When you press "Use in prompt", Claude Code tells the
 mod whether it took the text, and the mod reads nothing else of that answer.
 The mod reads no file, starts no program and makes no network request of its
-own. It keeps one value on your machine: whether you hid the sign-in row.
+own. It keeps nothing on your machine. Hide removes the sign-in row for the
+session; the next session shows it again until you sign in.
 
 In Codex and Waku Agent nothing runs on your machine.
 
@@ -46,6 +47,12 @@ The plugin now carries the mod described above. Earlier versions held
 configuration only. After you update, Claude Code shows the row when you are
 not signed in to Waku, and `/waku-memories` opens the pane. If you do not
 want the program on your machine, turn the plugin off with `/plugin`.
+
+### New in 0.15.5
+
+The sign-in row shows in every session until you sign in to Waku. Hide
+removes it for that session only, and the plugin no longer keeps your Hide
+on your machine.
 
 ### New in 0.15.4
 

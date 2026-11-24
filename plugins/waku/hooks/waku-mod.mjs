@@ -11,8 +11,7 @@
 //
 // Rules this file keeps (spec 095 D3; src/mod.test.mjs fails when one breaks):
 //   - it calls exactly these: $.command.register, $.mcp.connect, $.mcp.call,
-//     $.prompt.fill, $.session.cwd, $.store.get, $.store.set,
-//     $.ui.invalidate, $.ui.open, $.ui.resolve;
+//     $.prompt.fill, $.session.cwd, $.ui.invalidate, $.ui.open, $.ui.resolve;
 //   - it hooks session.start, session.measure, command.run and ui.render.
 //     Claude Code hands none of them a prompt, a reply or a tool call;
 //   - it calls three tools, and only when the person asks: /waku-memories,
@@ -31,7 +30,6 @@ const PANE = 'waku'
 // Not `waku`: the plugin's skill is /waku:waku, and the prompt's completion
 // picks the skill when a person types /waku (measured 2026-11-19).
 const COMMAND = 'waku-memories'
-const HIDE_KEY = 'hide-sign-in-row'
 const BODY_MAX = 4000
 const QUOTE_MAX = 2000
 const PAGE = 15 // rows in one ui.memories answer (spec 096 D7)
@@ -293,14 +291,9 @@ async function connect($) {
     // Signed out, or another account next: the list is no longer known to be theirs.
     forget()
   }
-  if (view.server !== null && view.isRowHidden) {
-    // Hide lasts until the person signs in. A later sign-out shows the row again.
+  if (view.server !== null) {
+    // A later sign-out in this session shows the row again.
     view.isRowHidden = false
-    try {
-      await $.store.set(HIDE_KEY, false)
-    } catch {
-      // The stored choice stays; the row stays hidden on this machine.
-    }
   }
   if (before !== `${view.server}|${view.reason}`) {
     redraw($)
@@ -542,14 +535,10 @@ function open($, id) {
   }
 }
 
-async function hideRow($) {
+/** Hide lasts for this session only: every session asks again (Ian, 2026-11-24). */
+function hideRow($) {
   view.isRowHidden = true
   redraw($)
-  try {
-    await $.store.set(HIDE_KEY, true)
-  } catch {
-    // Hidden for this session only.
-  }
 }
 
 /** A command's answer the person reads and Claude does not. No memory text. */
@@ -761,11 +750,8 @@ export function register(on) {
     } catch {
       // Another plugin holds the name. The row still works.
     }
-    try {
-      view.isRowHidden = (await $.store.get(HIDE_KEY)) === true
-    } catch {
-      view.isRowHidden = false
-    }
+    // Every session shows the row while Waku waits on sign-in, until Hide.
+    view.isRowHidden = false
     await connect($)
 
     return next(e)
