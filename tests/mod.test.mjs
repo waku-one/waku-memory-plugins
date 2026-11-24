@@ -31,7 +31,7 @@ test('only the Claude Code manifest names the mod, in a file of its own', () => 
   }
 })
 
-test('the mod calls exactly the ten methods spec 095 D3 lists', () => {
+test('the mod calls exactly the eight methods spec 095 D3 lists', () => {
   const used = [...new Set([...code.matchAll(/\$\.([a-z]+\.[a-zA-Z]+)\(/g)].map((m) => m[1]))].sort()
   assert.deepEqual(used, [
     'command.register',
@@ -39,8 +39,6 @@ test('the mod calls exactly the ten methods spec 095 D3 lists', () => {
     'mcp.connect',
     'prompt.fill',
     'session.cwd',
-    'store.get',
-    'store.set',
     'ui.invalidate',
     'ui.open',
     'ui.resolve',
@@ -159,7 +157,7 @@ test('the Claude Code manifest and the README say that a program runs, and neith
 test('the CI check reads the lines claude plugin validate prints', () => {
   const output = [
     '  > ./waku-mod.mjs hooks: session.start, session.measure, command.run{command=waku-memories}, ui.render{component=AbovePrompt} (default matcher key: plugin), ui.render{component=Pane, requestId=waku} (default matcher key: plugin)',
-    '  > ./waku-mod.mjs calls: $.command.register, $.mcp.call (via page, read, whole), $.mcp.connect (via connect), $.prompt.fill (via useInPrompt), $.session.cwd (via page), $.store.get, $.store.set (via connect, hideRow), $.ui.invalidate (via redraw), $.ui.open (via run), $.ui.resolve',
+    '  > ./waku-mod.mjs calls: $.command.register, $.mcp.call (via page, read, whole), $.mcp.connect (via connect), $.prompt.fill (via useInPrompt), $.session.cwd (via page), $.ui.invalidate (via redraw), $.ui.open (via run), $.ui.resolve',
   ].join('\n')
   assert.deepEqual(namesOn(output, 'calls'), CALLS)
   assert.deepEqual(namesOn(output, 'hooks'), EVENTS)

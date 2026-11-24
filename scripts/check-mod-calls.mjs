@@ -16,8 +16,6 @@ export const CALLS = [
   '$.mcp.connect',
   '$.prompt.fill',
   '$.session.cwd',
-  '$.store.get',
-  '$.store.set',
   '$.ui.invalidate',
   '$.ui.open',
   '$.ui.resolve',

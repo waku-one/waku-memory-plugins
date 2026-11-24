@@ -121,35 +121,36 @@ for (const surface of ROW_SURFACES) {
   })
 }
 
-test('Hide lasts into the next session', async ($, on) => {
-  const stored = new Map<string, unknown>()
-  stubs(on, [], { link: signedOut, stored })
+test('Hide lasts for this session only, and the next session shows the row again', async ($, on) => {
+  stubs(on, [], { link: signedOut })
   on('ui.render', { plugin: 'waku' }, () => ({ type: 'Text', props: {}, children: ['nothing of ours'] }))
   await start($)
   let ui = await $.ui.mount(band('terminal') as any)
   await ui.press({ key: 'hide' })
   expect(await ui.find({ type: 'Text', text: SIGN_IN })).toBeUndefined()
+  await measure($)
+  expect(await ui.find({ type: 'Text', text: SIGN_IN })).toBeUndefined()
   await ui.unmount()
-  expect(stored.get('hide-sign-in-row')).toBe(true)
-  // A new session reads the stored choice at its start.
+  // Ian, 2026-11-24: every session asks again until the person signs in.
   await start($)
   ui = await $.ui.mount(band('terminal') as any)
-  expect(await ui.find({ type: 'Text', text: SIGN_IN })).toBeUndefined()
+  expect(await ui.find({ type: 'Text', text: SIGN_IN })).toBeDefined()
   await ui.unmount()
 })
 
-test('Hide ends when the person signs in, so a later sign-out shows the row again', async ($, on) => {
-  const stored = new Map<string, unknown>([['hide-sign-in-row', true]])
+test('a sign-out after a sign-in shows the row again in the same session', async ($, on) => {
   let link: any = signedOut()
-  stubs(on, [], { link: () => link, stored })
+  stubs(on, [], { link: () => link })
   on('ui.render', { plugin: 'waku' }, () => ({ type: 'Text', props: {}, children: ['nothing of ours'] }))
   await start($)
+  let ui = await $.ui.mount(band('terminal') as any)
+  await ui.press({ key: 'hide' })
+  await ui.unmount()
   link = { isConnected: true, server: SERVER }
   await measure($)
-  expect(stored.get('hide-sign-in-row')).toBe(false)
   link = signedOut()
   await measure($)
-  const ui = await $.ui.mount(band('terminal') as any)
+  ui = await $.ui.mount(band('terminal') as any)
   expect(await ui.find({ type: 'Text', text: SIGN_IN })).toBeDefined()
   await ui.unmount()
 })

@@ -1,6 +1,6 @@
 {
   "name": "waku-memory",
-  "version": "0.15.4",
+  "version": "0.15.5",
   "description": "Waku Memory for your coding agent: the command line for one-time history import, full record and sign-in.",
   "keywords": ["mcp", "memory", "claude-code", "agent", "waku"],
   "homepage": "https://www.waku.one/",
