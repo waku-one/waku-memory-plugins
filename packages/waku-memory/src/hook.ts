@@ -125,7 +125,7 @@ export type HookDeps = {
 // hook.test.mjs's drift check (against package.json) both need it; task 14
 // (spec 012 §9) bumps this, package.json and the plugin manifest
 // (.codex-plugin/plugin.json) to 0.3.0 together.
-export const SHIM_VERSION = '0.15.3'
+export const SHIM_VERSION = '0.15.4'
 
 // Exported for capture.ts, which writes the file this module reads.
 export const CONFIG_FILE_NAME = 'config.json'

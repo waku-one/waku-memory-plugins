@@ -47,6 +47,12 @@ configuration only. After you update, Claude Code shows the row when you are
 not signed in to Waku, and `/waku-memories` opens the pane. If you do not
 want the program on your machine, turn the plugin off with `/plugin`.
 
+### New in 0.15.4
+
+A list row shows a skill file by its name and description also when the
+file's description is long. Knowledge badges are blue and Profile badges
+violet on the Desktop app too.
+
 ### New in 0.15.3
 
 A list row shows a skill file by its name and description, and shows a

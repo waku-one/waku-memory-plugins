@@ -85,18 +85,21 @@ export const COPY = {
   episodes: 'Episodes',
 }
 
-// The look. Colors are Claude Code's theme keys, so a badge follows the
+// The look. Most colors are Claude Code's theme keys, so a badge follows the
 // person's light or dark theme. Knowledge is blue and Profile violet, as on
 // the console; the rest are the nearest theme keys. Emily decides the final
 // look (visual-design-system.md); this is the first version she edits.
 const CATEGORIES = ['profile', 'rule', 'state', 'knowledge', 'episode']
 const BADGE = {
-  profile: { word: COPY.profile, name: COPY.profile, color: 'merged' },
+  // Knowledge and Profile are hex: the Desktop app drew the theme keys
+  // 'suggestion' and then 'permission' red (Ian's screenshots, 2026-11-24).
+  // A mod is not told the person's mode, so one value serves both. Measured
+  // on the desktop's grounds: 4.5:1 and 4.9:1 on dark (#211F1D), 3.5:1 and
+  // 3.2:1 on light (#FAF9F5). Emily decides the final colors.
+  profile: { word: COPY.profile, name: COPY.profile, color: '#9B7BE0' },
   rule: { word: COPY.rule, name: COPY.rules, color: 'warning' },
   state: { word: COPY.status, name: COPY.status, color: 'success' },
-  // Not 'suggestion': the Desktop app draws that key red, and a red badge
-  // reads as an error (Ian's screenshot, 2026-11-24).
-  knowledge: { word: COPY.knowledge, name: COPY.knowledge, color: 'permission' },
+  knowledge: { word: COPY.knowledge, name: COPY.knowledge, color: '#4A86E0' },
   episode: { word: COPY.episode, name: COPY.episodes, color: 'subtle' },
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
@@ -145,8 +148,10 @@ export function clean(value, max) {
 
 /** The same, on one line. */
 // A skill file kept as a memory opens with YAML front matter. Its name and
-// its description say more than the dashes do.
-const FRONT = /^---\s*\n([\s\S]*?)\n---/
+// its description say more than the dashes do. A list row holds the first
+// 200 characters (spec 096 D7), so a long description can cut the front
+// matter before its closing dashes: the end of the text closes it then.
+const FRONT = /^---[ \t]*\r?\n([\s\S]*?)(?:\r?\n---|$)/
 
 /**
  * A memory's first line as a list row shows it: the front matter's name and
@@ -159,6 +164,9 @@ export function headline(value) {
     const field = key => (new RegExp(`^${key}:\\s*(.+)$`, 'm').exec(front[1])?.[1] ?? '').replace(/^["']|["']$/g, '')
     const named = [field('name'), field('description')].filter(Boolean).join(' — ')
     text = named !== '' ? named : text.slice(front[0].length)
+    if (named === '' && text.trim() === '') {
+      text = front[1]
+    }
   }
   text = text
     .replace(/^\s*#{1,6}\s+/gm, '')
