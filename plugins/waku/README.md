@@ -48,6 +48,13 @@ configuration only. After you update, Claude Code shows the row when you are
 not signed in to Waku, and `/waku-memories` opens the pane. If you do not
 want the program on your machine, turn the plugin off with `/plugin`.
 
+### New in 0.15.6
+
+The program for Claude Code works as it did in 0.15.5. One line of it held
+invisible characters, in the rule that removes such characters from a
+memory's text. That line now names each character by its code, so the file
+reads the same as it runs.
+
 ### New in 0.15.5
 
 The sign-in row shows in every session until you sign in to Waku. Hide
