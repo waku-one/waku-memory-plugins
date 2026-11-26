@@ -475,3 +475,21 @@ test('every hook sends the plugin version, and it is the package version', () =>
     }
   }
 })
+
+// A character that draws nothing makes a file read differently from how it
+// runs. The plugin's one program removes such characters from a memory's
+// text, and until 0.15.5 its own rule held them. A file names one by its
+// code, such as \u200b.
+test('no text file under plugins/ holds an invisible character', () => {
+  const walk = (dir) =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+      entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
+    )
+  const files = walk(join(root, 'plugins')).filter((file) => !/\.(png|svg)$/.test(file))
+  assert.ok(files.length > 10)
+  for (const file of files) {
+    const found = readFileSync(file, 'utf8').match(/[\p{Cf}\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/u)
+    assert.equal(found, null, `${file} holds U+${found?.[0].codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`)
+  }
+})
+

@@ -135,7 +135,7 @@ const view = {
 
 // C0 and C1 controls, zero-width characters and bidirectional overrides.
 // eslint-disable-next-line no-control-regex
-const UNSAFE = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f​-‏‪-‮⁠-⁩﻿]/g
+const UNSAFE = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g
 
 /** Server text made safe to draw or insert: no control or direction marks. */
 export function clean(value, max) {
